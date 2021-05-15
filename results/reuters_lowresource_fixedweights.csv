@@ -1,0 +1,14 @@
+,test_name,acc,ductive,seed,unlabeled_amount,labeled_amount
+0,2 layer default GCN,0.871,trans,0,1000,400
+1,2 layer GCN unweighted,0.871,trans,0,1000,400
+2,2 layer GCN no EMBED,0.875,trans,0,1000,400
+3,2 layer GCN unweighted no EMBED,0.885,trans,0,1000,400
+4,1 layer GCN no EMBED,0.877,trans,0,1000,400
+5,3 layer GCN no EMBED,0.882,trans,0,1000,400
+6,3 layer GCN,0.876,trans,0,1000,400
+7,4 layer GCN,0.681,trans,0,1000,400
+8,1 hop SimpleGCN,0.821,trans,0,1000,400
+9,3 hop SimpleGCN,0.872,trans,0,1000,400
+10,5 hop SimpleGCN,0.609,trans,0,1000,400
+11,4 head GAT,0.603,trans,0,1000,400
+12,2 head GAT,0.5,trans,0,1000,400

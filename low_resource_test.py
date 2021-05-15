@@ -16,7 +16,7 @@ import pandas as pd
 Trains and Tests according to the config specified in config.py
 """
 labeled_amounts = [400] # 80
-unlabeled_amounts = [40, 100, 200, 300, 400, 600, 1000] # 40
+unlabeled_amounts = [1000] # [40, 100, 200, 300, 400, 600, 1000] # 40
 seeds = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 repeats_per_seed = 1
 
@@ -84,7 +84,7 @@ inductive_settings = {
 
 models = [
     {
-        "test_name" : "2 layer default GCN weighted",
+        "test_name" : "2 layer default GCN",
         "model" : {
             "name" : "gcn",
             "kwargs" : {
@@ -95,102 +95,186 @@ models = [
             }
         },
     },
-    # {
-    #     "test_name" : "2 layer GCN unweighted",
-    #     "model" : {
-    #         "name" : "gcn",
-    #         "kwargs" : {
-    #             "layer_dims" : [80],
-    #             "dropout" : 0.25,
-    #             "use_edge_weights" : False,
-    #             "custom_impl" : True
-    #         }
-    #     },
-    # },
-    # {
-    #     "test_name" : "2 layer GCN unweighted no EMBED",
-    #     "embedding_layer" : None,
-    #     "features_as_onehot" : True,
-    #     "model" : {
-    #         "name" : "gcn",
-    #         "kwargs" : {
-    #             "layer_dims" : [80],
-    #             "dropout" : 0.25,
-    #             "use_edge_weights" : False,
-    #             "custom_impl" : True
-    #         }
-    #     },
-    # },
-    # {
-    #     "test_name" : "4 layer GCN unweighted",
-    #     "embedding_layer" : 200,
-    #     "features_as_onehot" : False,
-    #     "model" : {
-    #         "name" : "gcn",
-    #         "kwargs" : {
-    #             "layer_dims" : [80, 40, 10],
-    #             "dropout" : 0.25,
-    #             "use_edge_weights" : True,
-    #             "custom_impl" : True
-    #         }
-    #     },
-    # },
-    # {
-    #     "test_name" : "1 hop SimpleGCN",
-    #     "model" : {
-    #         "name" : "simplegcn",
-    #         "kwargs" : {
-    #             "num_hops" : 1,
-    #             "dropout" : 0.1
-    #         }
-    #     },
-    # },
-    # {
-    #     "test_name" : "3 hop SimpleGCN",
-    #     "model" : {
-    #         "name" : "simplegcn",
-    #         "kwargs" : {
-    #             "num_hops" : 3,
-    #             "dropout" : 0.1
-    #         }
-    #     },
-    # },
-    # {
-    #     "test_name" : "4 head GAT",
-    #     "model" : {
-    #         "name" : "gat",
-    #         "kwargs" : {
-    #             "layer_dims" : [40],
-    #             "num_heads" : 4,
-    #             "concat" : True,
-    #             "dropout" : 0.1
-    #         }
-    #     },
-    # },
-    # {
-    #     "test_name" : "2 head GAT",
-    #     "model" : {
-    #         "name" : "gat",
-    #         "kwargs" : {
-    #             "layer_dims" : [40],
-    #             "num_heads" : 2,
-    #             "concat" : True,
-    #             "dropout" : 0.1
-    #         }
-    #     },
-    # },
-    # {
-    #     "test_name" : "4 head no concat GAT",
-    #     "model" : {
-    #         "name" : "gat",
-    #         "kwargs" : {
-    #             "layer_dims" : [40],
-    #             "num_heads" : 4,
-    #             "concat" : False,
-    #             "dropout" : 0.1
-    #         }
-    #     },
-    # }
+    {
+        "test_name" : "2 layer GCN unweighted",
+        "model" : {
+            "name" : "gcn",
+            "kwargs" : {
+                "layer_dims" : [80],
+                "dropout" : 0.25,
+                "use_edge_weights" : False,
+                "custom_impl" : False
+            }
+        },
+    },
+    {
+        "test_name" : "2 layer GCN no EMBED",
+        "embedding_layer" : None,
+        "features_as_onehot" : True,
+        "model" : {
+            "name" : "gcn",
+            "kwargs" : {
+                "layer_dims" : [80],
+                "dropout" : 0.25,
+                "use_edge_weights" : True,
+                "custom_impl" : False
+            }
+        },
+    },
+    {
+        "test_name" : "2 layer GCN unweighted no EMBED",
+        "model" : {
+            "name" : "gcn",
+            "kwargs" : {
+                "layer_dims" : [80],
+                "dropout" : 0.25,
+                "use_edge_weights" : False,
+                "custom_impl" : False
+            }
+        },
+    },
+    {
+        "test_name" : "1 layer GCN no EMBED",
+        "model" : {
+            "name" : "gcn",
+            "kwargs" : {
+                "layer_dims" : [80],
+                "dropout" : 0.25,
+                "use_edge_weights" : True,
+                "custom_impl" : False
+            }
+        },
+    },
+    {
+        "test_name" : "3 layer GCN no EMBED",
+        "model" : {
+            "name" : "gcn",
+            "kwargs" : {
+                "layer_dims" : [80],
+                "dropout" : 0.25,
+                "use_edge_weights" : True,
+                "custom_impl" : False
+            }
+        },
+    },
+    {
+        "test_name" : "3 layer GCN",
+        "embedding_layer" : 200,
+        "features_as_onehot" : False,
+        "model" : {
+            "name" : "gcn",
+            "kwargs" : {
+                "layer_dims" : [40, 10],
+                "dropout" : 0.25,
+                "use_edge_weights" : True,
+                "custom_impl" : False
+            }
+        },
+    },
+    {
+        "test_name" : "4 layer GCN",
+        "embedding_layer" : 200,
+        "features_as_onehot" : False,
+        "model" : {
+            "name" : "gcn",
+            "kwargs" : {
+                "layer_dims" : [80, 40, 10],
+                "dropout" : 0.25,
+                "use_edge_weights" : True,
+                "custom_impl" : False
+            }
+        },
+    },
+    {
+        "test_name" : "1 hop SimpleGCN",
+        "model" : {
+            "name" : "simplegcn",
+            "kwargs" : {
+                "num_hops" : 1,
+                "dropout" : 0.25
+            }
+        },
+    },
+    {
+        "test_name" : "3 hop SimpleGCN",
+        "model" : {
+            "name" : "simplegcn",
+            "kwargs" : {
+                "num_hops" : 3,
+                "dropout" : 0.25
+            }
+        },
+    },
+    {
+        "test_name" : "5 hop SimpleGCN",
+        "model" : {
+            "name" : "simplegcn",
+            "kwargs" : {
+                "num_hops" : 5,
+                "dropout" : 0.25
+            }
+        },
+    },
+    {
+        "test_name" : "4 head GAT",
+        "model" : {
+            "name" : "gat",
+            "kwargs" : {
+                "layer_dims" : [40],
+                "num_heads" : 4,
+                "concat" : True,
+                "dropout" : 0.1
+            }
+        },
+    },
+    {
+        "test_name" : "2 head GAT",
+        "model" : {
+            "name" : "gat",
+            "kwargs" : {
+                "layer_dims" : [40],
+                "num_heads" : 2,
+                "concat" : True,
+                "dropout" : 0.1
+            }
+        },
+    },
+    {
+        "test_name" : "4 head no concat GAT",
+        "model" : {
+            "name" : "gat",
+            "kwargs" : {
+                "layer_dims" : [40],
+                "num_heads" : 4,
+                "concat" : False,
+                "dropout" : 0.1
+            }
+        },
+    },
+    {
+        "test_name" : "8 head no concat GAT",
+        "model" : {
+            "name" : "gat",
+            "kwargs" : {
+                "layer_dims" : [80],
+                "num_heads" : 8,
+                "concat" : False,
+                "dropout" : 0.1
+            }
+        },
+    },
+    {
+        "test_name" : "8 head no concat GAT",
+        "model" : {
+            "name" : "gat",
+            "kwargs" : {
+                "layer_dims" : [160],
+                "num_heads" : 8,
+                "concat" : False,
+                "dropout" : 0.1
+            }
+        },
+    }
 ]
 
 def test_all_models(results, docs, labels, tvt_idx, save_info):

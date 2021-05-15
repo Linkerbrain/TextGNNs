@@ -71,7 +71,7 @@ def pmi_tfidf_graph(docs, window_size=10):
     # save the edges
     for ((doc_idx, word), count) in frequency_in_doc.items():
         # tf = count in doc / total doc length
-        tf = count / len(docs[doc_idx])
+        tf = count # / len(docs[doc_idx])
         # idf = log (N / docs with that word)
         idf = log(doc_count / in_document_count[word])
 

@@ -1,5 +1,5 @@
 config = {
-    "experiment_name" : "reuters_lowresource_noedgeweights",
+    "experiment_name" : "reuters_lowresource_fixedweights",
     "test_name" : "placeholder",
 
     # Data Settings
@@ -10,7 +10,7 @@ config = {
     "idx_split" : [80, 20, 10],
 
     # Transductive or Inductive
-    "ductive" : "in",
+    "ductive" : "trans",
 
     # Graph Respresentation Settings
     "unique_document_embeddings" : True,
@@ -18,9 +18,9 @@ config = {
 
     # Graph Settings
     "graph_method" : {
-        "name" : "co_occurence",
+        "name" : "pmi_tfidf",
         "kwargs" : {
-            "window_size" : 4
+            "window_size" : 10
         }
     },
 
