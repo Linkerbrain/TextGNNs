@@ -1,0 +1,120 @@
+,test_name,acc,ductive,seed,unlabeled_amount,labeled_amount
+0,1 layer GCN weighted,0.798,trans,0,1000,400
+1,2 layer GCN weighted,0.797,trans,0,1000,400
+2,2 layer GCN unweighted,0.888,trans,0,1000,400
+3,2 layer GCN unweighted no EMBED,0.89,trans,0,1000,400
+4,4 layer GCN unweighted,0.777,trans,0,1000,400
+5,1 hop SimpleGCN,0.824,trans,0,1000,400
+6,3 hop SimpleGCN,0.887,trans,0,1000,400
+7,4 head GAT,0.671,trans,0,1000,400
+8,2 head GAT,0.572,trans,0,1000,400
+9,1 layer GCN weighted,0.811,in,0,1000,400
+10,2 layer GCN weighted,0.833,in,0,1000,400
+11,2 layer GCN unweighted,0.841,in,0,1000,400
+12,4 layer GCN unweighted,0.794,in,0,1000,400
+13,1 hop SimpleGCN,0.876,in,0,1000,400
+14,3 hop SimpleGCN,0.882,in,0,1000,400
+15,4 head GAT,0.774,in,0,1000,400
+16,2 head GAT,0.762,in,0,1000,400
+17,4 head no concat GAT,0.832,in,0,1000,400
+18,1 layer GCN weighted,0.755,trans,1,1000,400
+19,2 layer GCN weighted,0.763,trans,1,1000,400
+20,2 layer GCN unweighted,0.902,trans,1,1000,400
+21,2 layer GCN unweighted no EMBED,0.901,trans,1,1000,400
+22,4 layer GCN unweighted,0.71,trans,1,1000,400
+23,1 hop SimpleGCN,0.837,trans,1,1000,400
+24,3 hop SimpleGCN,0.892,trans,1,1000,400
+25,4 head GAT,0.451,trans,1,1000,400
+26,2 head GAT,0.737,trans,1,1000,400
+27,4 head no concat GAT,0.696,trans,1,1000,400
+28,1 layer GCN weighted,0.862,in,1,1000,400
+29,2 layer GCN weighted,0.859,in,1,1000,400
+30,2 layer GCN unweighted,0.855,in,1,1000,400
+31,4 layer GCN unweighted,0.827,in,1,1000,400
+32,1 hop SimpleGCN,0.898,in,1,1000,400
+33,3 hop SimpleGCN,0.888,in,1,1000,400
+34,4 head GAT,0.802,in,1,1000,400
+35,2 head GAT,0.739,in,1,1000,400
+36,4 head no concat GAT,0.849,in,1,1000,400
+37,1 layer GCN weighted,0.77,trans,2,1000,400
+38,2 layer GCN weighted,0.733,trans,2,1000,400
+39,2 layer GCN unweighted,0.88,trans,2,1000,400
+40,2 layer GCN unweighted no EMBED,0.887,trans,2,1000,400
+41,4 layer GCN unweighted,0.697,trans,2,1000,400
+42,1 hop SimpleGCN,0.826,trans,2,1000,400
+43,3 hop SimpleGCN,0.87,trans,2,1000,400
+44,4 head GAT,0.591,trans,2,1000,400
+45,2 head GAT,0.45,trans,2,1000,400
+46,4 head no concat GAT,0.708,trans,2,1000,400
+47,1 layer GCN weighted,0.847,in,2,1000,400
+48,2 layer GCN weighted,0.838,in,2,1000,400
+49,2 layer GCN unweighted,0.844,in,2,1000,400
+50,4 layer GCN unweighted,0.785,in,2,1000,400
+51,1 hop SimpleGCN,0.867,in,2,1000,400
+52,3 hop SimpleGCN,0.859,in,2,1000,400
+53,4 head GAT,0.79,in,2,1000,400
+54,2 head GAT,0.75,in,2,1000,400
+55,4 head no concat GAT,0.813,in,2,1000,400
+56,1 layer GCN weighted,0.746,trans,3,1000,400
+57,2 layer GCN weighted,0.771,trans,3,1000,400
+58,2 layer GCN unweighted,0.885,trans,3,1000,400
+59,2 layer GCN unweighted no EMBED,0.894,trans,3,1000,400
+60,4 layer GCN unweighted,0.588,trans,3,1000,400
+61,1 hop SimpleGCN,0.824,trans,3,1000,400
+62,3 hop SimpleGCN,0.884,trans,3,1000,400
+63,4 head GAT,0.444,trans,3,1000,400
+64,2 head GAT,0.395,trans,3,1000,400
+65,4 head no concat GAT,0.769,trans,3,1000,400
+66,1 layer GCN weighted,0.841,in,3,1000,400
+67,2 layer GCN weighted,0.848,in,3,1000,400
+68,2 layer GCN unweighted,0.861,in,3,1000,400
+69,4 layer GCN unweighted,0.827,in,3,1000,400
+70,1 hop SimpleGCN,0.882,in,3,1000,400
+71,3 hop SimpleGCN,0.869,in,3,1000,400
+72,4 head GAT,0.782,in,3,1000,400
+73,2 head GAT,0.744,in,3,1000,400
+74,4 head no concat GAT,0.807,in,3,1000,400
+75,1 layer GCN weighted,0.778,trans,4,1000,400
+76,2 layer GCN weighted,0.787,trans,4,1000,400
+77,2 layer GCN unweighted,0.875,trans,4,1000,400
+78,2 layer GCN unweighted no EMBED,0.877,trans,4,1000,400
+79,4 layer GCN unweighted,0.754,trans,4,1000,400
+80,1 hop SimpleGCN,0.799,trans,4,1000,400
+81,3 hop SimpleGCN,0.867,trans,4,1000,400
+82,4 head GAT,0.57,trans,4,1000,400
+83,2 head GAT,0.594,trans,4,1000,400
+84,4 head no concat GAT,0.624,trans,4,1000,400
+85,1 layer GCN weighted,0.841,in,4,1000,400
+86,2 layer GCN weighted,0.842,in,4,1000,400
+87,2 layer GCN unweighted,0.843,in,4,1000,400
+88,4 layer GCN unweighted,0.82,in,4,1000,400
+89,1 hop SimpleGCN,0.855,in,4,1000,400
+90,3 hop SimpleGCN,0.861,in,4,1000,400
+91,4 head GAT,0.789,in,4,1000,400
+92,2 head GAT,0.742,in,4,1000,400
+93,4 head no concat GAT,0.774,in,4,1000,400
+94,1 layer GCN weighted,0.777,trans,5,1000,400
+95,2 layer GCN weighted,0.803,trans,5,1000,400
+96,2 layer GCN unweighted,0.863,trans,5,1000,400
+97,2 layer GCN unweighted no EMBED,0.879,trans,5,1000,400
+98,4 layer GCN unweighted,0.687,trans,5,1000,400
+99,1 hop SimpleGCN,0.821,trans,5,1000,400
+100,3 hop SimpleGCN,0.881,trans,5,1000,400
+101,4 head GAT,0.456,trans,5,1000,400
+102,2 head GAT,0.66,trans,5,1000,400
+103,4 head no concat GAT,0.589,trans,5,1000,400
+104,1 layer GCN weighted,0.833,in,5,1000,400
+105,2 layer GCN weighted,0.846,in,5,1000,400
+106,2 layer GCN unweighted,0.85,in,5,1000,400
+107,4 layer GCN unweighted,0.816,in,5,1000,400
+108,1 hop SimpleGCN,0.877,in,5,1000,400
+109,3 hop SimpleGCN,0.868,in,5,1000,400
+110,4 head GAT,0.805,in,5,1000,400
+111,2 head GAT,0.75,in,5,1000,400
+112,4 head no concat GAT,0.836,in,5,1000,400
+113,1 layer GCN weighted,0.751,trans,6,1000,400
+114,2 layer GCN weighted,0.786,trans,6,1000,400
+115,2 layer GCN unweighted,0.879,trans,6,1000,400
+116,2 layer GCN unweighted no EMBED,0.886,trans,6,1000,400
+117,4 layer GCN unweighted,0.774,trans,6,1000,400
+118,1 hop SimpleGCN,0.831,trans,6,1000,400

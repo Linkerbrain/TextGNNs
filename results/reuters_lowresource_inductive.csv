@@ -1,0 +1,22 @@
+,test_name,acc,ductive,seed,unlabeled_amount,labeled_amount
+0,2 layer GCN with Edge Weights,0.65,trans,0,40,80
+1,2 layer GCN with Edge Weights,0.55,in,0,40,80
+2,2 layer GCN with Edge Weights,0.725,trans,0,40,160
+3,2 layer GCN with Edge Weights,0.55,in,0,40,160
+4,2 layer GCN with Edge Weights,0.775,trans,0,40,400
+5,2 layer GCN with Edge Weights,0.675,in,0,40,400
+6,2 layer GCN with Edge Weights,0.8,trans,0,40,800
+7,2 layer GCN with Edge Weights,0.875,in,0,40,800
+8,2 layer GCN with Edge Weights,0.775,trans,0,40,1600
+9,2 layer GCN with Edge Weights,0.85,in,0,40,1600
+10,2 layer GCN with Edge Weights,0.725,trans,0,40,3200
+11,2 layer GCN with Edge Weights,0.875,in,0,40,3200
+12,2 layer GCN with Edge Weights,0.5725,trans,0,400,80
+13,2 layer GCN with Edge Weights,0.4325,in,0,400,80
+14,2 layer GCN with Edge Weights,0.7,trans,0,400,160
+15,2 layer GCN with Edge Weights,0.56,in,0,400,160
+16,2 layer GCN with Edge Weights,0.7325,trans,0,400,400
+17,2 layer GCN with Edge Weights,0.7125,in,0,400,400
+18,2 layer GCN with Edge Weights,0.76,trans,0,400,800
+19,2 layer GCN with Edge Weights,0.815,in,0,400,800
+20,2 layer GCN with Edge Weights,0.73,trans,0,400,1600

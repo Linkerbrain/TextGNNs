@@ -1,0 +1,5 @@
+,test_name,acc,ductive,seed,unlabeled_amount,labeled_amount
+0,2 layer default GCN with Edge Weights,0.367,trans,0,1000,400
+1,2 layer default GCN without Edge Weights,0.403,trans,0,1000,400
+2,2 layer their GCN with Edge Weights,0.781,trans,0,1000,400
+3,2 layer their GCN without Edge Weights,0.883,trans,0,1000,400

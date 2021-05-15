@@ -1,0 +1,22 @@
+,test_name,acc,ductive,seed,unlabeled_amount,labeled_amount
+0,2 layer default GCN with Edge Weights,0.565,trans,0,1000,400
+1,2 layer default GCN without Edge Weights,0.25,trans,0,1000,400
+2,2 layer their GCN with Edge Weights,0.782,trans,0,1000,400
+3,2 layer their GCN without Edge Weights,0.885,trans,0,1000,400
+4,2 layer default GCN with Edge Weights,0.628,in,0,1000,400
+5,2 layer default GCN without Edge Weights,0.71,in,0,1000,400
+6,2 layer their GCN with Edge Weights,0.833,in,0,1000,400
+7,2 layer their GCN without Edge Weights,0.843,in,0,1000,400
+8,2 layer default GCN with Edge Weights,0.255,trans,1,1000,400
+9,2 layer default GCN without Edge Weights,0.341,trans,1,1000,400
+10,2 layer their GCN with Edge Weights,0.76,trans,1,1000,400
+11,2 layer their GCN without Edge Weights,0.888,trans,1,1000,400
+12,2 layer default GCN with Edge Weights,0.673,in,1,1000,400
+13,2 layer default GCN without Edge Weights,0.751,in,1,1000,400
+14,2 layer their GCN with Edge Weights,0.852,in,1,1000,400
+15,2 layer their GCN without Edge Weights,0.845,in,1,1000,400
+16,2 layer default GCN with Edge Weights,0.359,trans,2,1000,400
+17,2 layer default GCN without Edge Weights,0.291,trans,2,1000,400
+18,2 layer their GCN with Edge Weights,0.799,trans,2,1000,400
+19,2 layer their GCN without Edge Weights,0.881,trans,2,1000,400
+20,2 layer default GCN with Edge Weights,0.547,in,2,1000,400

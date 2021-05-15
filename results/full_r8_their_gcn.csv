@@ -1,0 +1,35 @@
+,test_name,acc,ductive
+0,2 layer GCN,0.962996802192782,trans
+1,2 layer 80 hid size GCN with edge weights,0.8245774326176336,trans
+2,2 layer 20 hid size GCN with edge weights,0.8830516217450891,trans
+3,2 layer 200 hid size GCN with edge weights,0.7894015532206486,trans
+4,1 layer GCN with edge weights,0.3682046596619461,trans
+5,1 layer GCN without edge weights,0.9227957971676565,trans
+6,4 layer GCN,0.8154408405664687,trans
+7,1 hop SimpleGCN,0.9209684787574235,trans
+8,2 hop SimpleGCN,0.84376427592508,trans
+9,4 hop SimpleGCN,0.8446779351301964,trans
+10,4 head concat 80 GAT,0.9218821379625399,trans
+11,8 head concat 80 GAT,0.9273640931932389,trans
+12,2 layer GCN,0.949748743718593,in
+13,2 layer 80 hid size GCN with edge weights,0.8985838282320694,in
+14,2 layer 20 hid size GCN with edge weights,0.8812243033348561,in
+15,2 layer 200 hid size GCN with edge weights,0.8236637734125172,in
+16,1 layer GCN with edge weights,0.7935130196436729,in
+17,1 layer GCN without edge weights,0.8021927820922796,in
+18,4 layer GCN,0.8026496116948378,in
+19,1 hop SimpleGCN,0.49474645957058017,in
+20,2 hop SimpleGCN,0.7971676564641389,in
+21,4 hop SimpleGCN,0.7994518044769301,in
+22,2 layer GCN,0.9620831429876656,trans
+23,2 layer 80 hid size GCN with edge weights,0.7989949748743719,trans
+24,2 layer 20 hid size GCN with edge weights,0.9104613978985838,trans
+25,2 layer 200 hid size GCN with edge weights,0.7903152124257652,trans
+26,1 layer GCN with edge weights,0.3608953860210142,trans
+27,1 layer GCN without edge weights,0.9191411603471905,trans
+28,4 layer GCN,0.7505710370031978,trans
+29,1 hop SimpleGCN,0.9191411603471905,trans
+30,2 hop SimpleGCN,0.8451347647327547,trans
+31,4 hop SimpleGCN,0.8428506167199634,trans
+32,4 head concat 80 GAT,0.9333028780264961,trans
+33,8 head concat 80 GAT,0.8972133394243947,trans
