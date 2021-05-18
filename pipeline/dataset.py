@@ -6,17 +6,37 @@ from torch_geometric.data import DataLoader
 import numpy as np
 
 class DocumentGraphDataset():
-    def __init__(self, docs, labels, tvt_idx):
+    def __init__(self, docs, labels, tvt_idx, force_vocab=None):
         (self.train_idx, self.val_idx, self.test_idx) = tvt_idx
         
         self.transductive = config["ductive"] == "trans"
 
+        if force_vocab:
+            docs = self.remove_out_of_vocab(docs, force_vocab)
+
         if self.transductive:
-            self.graph, self.vocab_size, self.num_labels = self.create_corpus_graph(docs, labels)
+            self.graph, self.vocab_size, self.num_labels = self.create_corpus_graph(docs, labels, force_vocab)
         else:
             self.graphs, self.vocab_size, self.num_labels = self.create_doc_graphs(docs, labels)
 
         print("[dataset] Succesfully prepared PyTorch Geometric data")
+
+    def remove_out_of_vocab(self, docs, vocab):
+        total = 0
+        failed = 0
+        for i in range(len(docs)):
+            fixed_doc = []
+            for word in docs[i]:
+                total += 1
+                if word in vocab:
+                    fixed_doc.append(word)
+                else:
+                    failed += 1
+
+            docs[i] = fixed_doc
+
+        print("Removed %i/%i words because they were not in vocab" % (failed, total))
+        return docs
 
     def nodenames_to_tensors(self, nodes, vocab):
         vocab_size = max(vocab.values()) + 1
@@ -46,11 +66,16 @@ class DocumentGraphDataset():
 
         return torch.tensor(idxs, dtype=torch.long), num_labels
 
-    def create_corpus_graph(self, docs, labels):
+    def create_corpus_graph(self, docs, labels, force_vocab=None):
         """
         Transductive preperation
         """
         graphs, vocab = create_graphs(docs)
+
+        if force_vocab:
+            vocab = force_vocab
+
+        self.vocab = vocab
 
         ((edge_indices, edge_weights), nodes) = graphs[0]
 

@@ -1,0 +1,4 @@
+,test_name,acc,ductive,unique_embeddings,seed,unlabeled_amount,labeled_amount
+0,300 80 GCN,0.834,trans,True,0,1000,400
+1,None 200 GCN,0.881,trans,True,0,1000,400
+2,300 80 GCN,0.873,trans,False,0,1000,400

@@ -1,11 +1,11 @@
 config = {
-    "experiment_name" : "reuters_lowresource_fixedweights",
+    "experiment_name" : "edgeweights_2",
     "test_name" : "placeholder",
 
     # Data Settings
     "data_base_path" : r'./clean_data/',
     "dataset" : "reutersENmin5",
-    "indices" : "0_3200lab400unlab", # 'inplace' splits it according to settings below (otherwise from disk)
+    "indices" : "3_800lab2000unlab", # 'inplace' splits it according to settings below (otherwise from disk)
 
     "idx_split" : [80, 20, 10],
 
@@ -25,12 +25,12 @@ config = {
     },
 
     # Model Settings
-    "embedding_layer" : 200, # Size of feature to embed to, else "None"
+    "embedding_layer" : 300, # Size of feature to embed to, else "None"
     "model" : {
         "name" : "gcn",
         "kwargs" : {
             "layer_dims" : [80],
-            "dropout" : 0.1,
+            "dropout" : 0.25,
             "use_edge_weights" : True,
             "custom_impl" : True
         }
@@ -49,8 +49,8 @@ config = {
     "try_gpu" : True,
     "terminate_early" : True,
     "terminate_patience" : 8, # stop if validation loss has not reached new high in x episodes
-    "epochs" : 400,
-    "lr" : 0.001,
+    "epochs" : 200,
+    "lr" : 0.002,
 }
 
 def update_config(dic):

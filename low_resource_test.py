@@ -84,197 +84,409 @@ inductive_settings = {
 
 models = [
     {
-        "test_name" : "2 layer default GCN",
+        "test_name" : "2 layer GCN with edge weights",
+        "embedding_layer" : 300,
+        "features_as_onehot" : False, 
         "model" : {
             "name" : "gcn",
             "kwargs" : {
                 "layer_dims" : [80],
-                "dropout" : 0.25,
+                "dropout" : 0.4,
+                "use_edge_weights" : True,
+                "custom_impl" : False
+            }
+        },
+    },
+    {
+        "test_name" : "2 layer GCN without edge weights",
+        "embedding_layer" : 300,
+        "features_as_onehot" : False, 
+        "model" : {
+            "name" : "gcn",
+            "kwargs" : {
+                "layer_dims" : [80],
+                "dropout" : 0.4,
                 "use_edge_weights" : False,
                 "custom_impl" : False
             }
         },
     },
-    {
-        "test_name" : "2 layer GCN unweighted",
-        "model" : {
-            "name" : "gcn",
-            "kwargs" : {
-                "layer_dims" : [80],
-                "dropout" : 0.25,
-                "use_edge_weights" : False,
-                "custom_impl" : False
-            }
-        },
-    },
-    {
-        "test_name" : "2 layer GCN no EMBED",
-        "embedding_layer" : None,
-        "features_as_onehot" : True,
-        "model" : {
-            "name" : "gcn",
-            "kwargs" : {
-                "layer_dims" : [80],
-                "dropout" : 0.25,
-                "use_edge_weights" : True,
-                "custom_impl" : False
-            }
-        },
-    },
-    {
-        "test_name" : "2 layer GCN unweighted no EMBED",
-        "model" : {
-            "name" : "gcn",
-            "kwargs" : {
-                "layer_dims" : [80],
-                "dropout" : 0.25,
-                "use_edge_weights" : False,
-                "custom_impl" : False
-            }
-        },
-    },
-    {
-        "test_name" : "1 layer GCN no EMBED",
-        "model" : {
-            "name" : "gcn",
-            "kwargs" : {
-                "layer_dims" : [80],
-                "dropout" : 0.25,
-                "use_edge_weights" : True,
-                "custom_impl" : False
-            }
-        },
-    },
-    {
-        "test_name" : "3 layer GCN no EMBED",
-        "model" : {
-            "name" : "gcn",
-            "kwargs" : {
-                "layer_dims" : [80],
-                "dropout" : 0.25,
-                "use_edge_weights" : True,
-                "custom_impl" : False
-            }
-        },
-    },
-    {
-        "test_name" : "3 layer GCN",
-        "embedding_layer" : 200,
-        "features_as_onehot" : False,
-        "model" : {
-            "name" : "gcn",
-            "kwargs" : {
-                "layer_dims" : [40, 10],
-                "dropout" : 0.25,
-                "use_edge_weights" : True,
-                "custom_impl" : False
-            }
-        },
-    },
-    {
-        "test_name" : "4 layer GCN",
-        "embedding_layer" : 200,
-        "features_as_onehot" : False,
-        "model" : {
-            "name" : "gcn",
-            "kwargs" : {
-                "layer_dims" : [80, 40, 10],
-                "dropout" : 0.25,
-                "use_edge_weights" : True,
-                "custom_impl" : False
-            }
-        },
-    },
-    {
-        "test_name" : "1 hop SimpleGCN",
-        "model" : {
-            "name" : "simplegcn",
-            "kwargs" : {
-                "num_hops" : 1,
-                "dropout" : 0.25
-            }
-        },
-    },
-    {
-        "test_name" : "3 hop SimpleGCN",
-        "model" : {
-            "name" : "simplegcn",
-            "kwargs" : {
-                "num_hops" : 3,
-                "dropout" : 0.25
-            }
-        },
-    },
-    {
-        "test_name" : "5 hop SimpleGCN",
-        "model" : {
-            "name" : "simplegcn",
-            "kwargs" : {
-                "num_hops" : 5,
-                "dropout" : 0.25
-            }
-        },
-    },
-    {
-        "test_name" : "4 head GAT",
-        "model" : {
-            "name" : "gat",
-            "kwargs" : {
-                "layer_dims" : [40],
-                "num_heads" : 4,
-                "concat" : True,
-                "dropout" : 0.1
-            }
-        },
-    },
-    {
-        "test_name" : "2 head GAT",
-        "model" : {
-            "name" : "gat",
-            "kwargs" : {
-                "layer_dims" : [40],
-                "num_heads" : 2,
-                "concat" : True,
-                "dropout" : 0.1
-            }
-        },
-    },
-    {
-        "test_name" : "4 head no concat GAT",
-        "model" : {
-            "name" : "gat",
-            "kwargs" : {
-                "layer_dims" : [40],
-                "num_heads" : 4,
-                "concat" : False,
-                "dropout" : 0.1
-            }
-        },
-    },
-    {
-        "test_name" : "8 head no concat GAT",
-        "model" : {
-            "name" : "gat",
-            "kwargs" : {
-                "layer_dims" : [80],
-                "num_heads" : 8,
-                "concat" : False,
-                "dropout" : 0.1
-            }
-        },
-    },
-    {
-        "test_name" : "8 head no concat GAT",
-        "model" : {
-            "name" : "gat",
-            "kwargs" : {
-                "layer_dims" : [160],
-                "num_heads" : 8,
-                "concat" : False,
-                "dropout" : 0.1
-            }
-        },
-    }
+    # {
+    #     "test_name" : "300 20 GCN",
+    #     "embedding_layer" : 300,
+    #     "features_as_onehot" : False,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [20],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "200 80 GCN",
+    #     "embedding_layer" : 200,
+    #     "features_as_onehot" : False,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [80],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "100 80 GCN",
+    #     "embedding_layer" : 100,
+    #     "features_as_onehot" : False,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [80],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "40 80 GCN",
+    #     "embedding_layer" : 40,
+    #     "features_as_onehot" : False,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [80],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "40 40 GCN",
+    #     "embedding_layer" : 40,
+    #     "features_as_onehot" : False,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [40],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "40 10 GCN",
+    #     "embedding_layer" : 40,
+    #     "features_as_onehot" : False,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [10],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "200 40 GCN",
+    #     "embedding_layer" : 200,
+    #     "features_as_onehot" : False,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [40],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "200 20 GCN",
+    #     "embedding_layer" : 200,
+    #     "features_as_onehot" : False,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [20],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "200 200 GCN",
+    #     "embedding_layer" : 200,
+    #     "features_as_onehot" : False,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [200],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "None 80 GCN",
+    #     "embedding_layer" : None,
+    #     "features_as_onehot" : True,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [80],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "None 200 GCN",
+    #     "embedding_layer" : None,
+    #     "features_as_onehot" : True,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [200],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "None 100 GCN",
+    #     "embedding_layer" : None,
+    #     "features_as_onehot" : True,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [100],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "None 20 GCN",
+    #     "embedding_layer" : None,
+    #     "features_as_onehot" : True,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [20],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "None 10 10 GCN",
+    #     "embedding_layer" : None,
+    #     "features_as_onehot" : True,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [10, 10],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "2 layer GCN unweighted",
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [80],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "2 layer GCN no EMBED",
+    #     "embedding_layer" : None,
+    #     "features_as_onehot" : True,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [80],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : True,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "2 layer GCN unweighted no EMBED",
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [80],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : False,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "1 layer GCN no EMBED",
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [80],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : True,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "3 layer GCN no EMBED",
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [80],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : True,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "3 layer GCN",
+    #     "embedding_layer" : 200,
+    #     "features_as_onehot" : False,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [40, 10],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : True,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "4 layer GCN",
+    #     "embedding_layer" : 200,
+    #     "features_as_onehot" : False,
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [80, 40, 10],
+    #             "dropout" : 0.25,
+    #             "use_edge_weights" : True,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "1 hop SimpleGCN",
+    #     "model" : {
+    #         "name" : "simplegcn",
+    #         "kwargs" : {
+    #             "num_hops" : 1,
+    #             "dropout" : 0.25
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "3 hop SimpleGCN",
+    #     "model" : {
+    #         "name" : "simplegcn",
+    #         "kwargs" : {
+    #             "num_hops" : 3,
+    #             "dropout" : 0.25
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "5 hop SimpleGCN",
+    #     "model" : {
+    #         "name" : "simplegcn",
+    #         "kwargs" : {
+    #             "num_hops" : 5,
+    #             "dropout" : 0.25
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "4 head GAT",
+    #     "model" : {
+    #         "name" : "gat",
+    #         "kwargs" : {
+    #             "layer_dims" : [40],
+    #             "num_heads" : 4,
+    #             "concat" : True,
+    #             "dropout" : 0.1
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "2 head GAT",
+    #     "model" : {
+    #         "name" : "gat",
+    #         "kwargs" : {
+    #             "layer_dims" : [40],
+    #             "num_heads" : 2,
+    #             "concat" : True,
+    #             "dropout" : 0.1
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "4 head no concat GAT",
+    #     "model" : {
+    #         "name" : "gat",
+    #         "kwargs" : {
+    #             "layer_dims" : [40],
+    #             "num_heads" : 4,
+    #             "concat" : False,
+    #             "dropout" : 0.1
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "8 head no concat GAT",
+    #     "model" : {
+    #         "name" : "gat",
+    #         "kwargs" : {
+    #             "layer_dims" : [80],
+    #             "num_heads" : 8,
+    #             "concat" : False,
+    #             "dropout" : 0.1
+    #         }
+    #     },
+    # },
+    # {
+    #     "test_name" : "8 head no concat GAT",
+    #     "model" : {
+    #         "name" : "gat",
+    #         "kwargs" : {
+    #             "layer_dims" : [160],
+    #             "num_heads" : 8,
+    #             "concat" : False,
+    #             "dropout" : 0.1
+    #         }
+    #     },
+    # }
 ]
 
 def test_all_models(results, docs, labels, tvt_idx, save_info):
@@ -329,8 +541,8 @@ def main():
                     update_config(transductive_settings)
                     results = test_all_models(results, docs, labels, tvt_idx, info_to_save)
 
-                    update_config(inductive_settings)
-                    results = test_all_models(results, docs, labels, tvt_idx, info_to_save)
+                    # update_config(inductive_settings)
+                    # results = test_all_models(results, docs, labels, tvt_idx, info_to_save)
 
 if __name__ == "__main__":
     main()

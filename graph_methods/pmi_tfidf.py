@@ -16,6 +16,7 @@ def pmi_tfidf_graph(docs, window_size=10):
 
     doc_names = [docname(i) for i in range(len(docs))]
 
+
     nodes = doc_names+all_unique_words
     nodename2idx = create_idx_mapping(nodes)
 
@@ -93,5 +94,7 @@ def pmi_tfidf_graph(docs, window_size=10):
         weights.append(1)
 
     edges = ([rows, columns], weights)
+
+    print("[DEBUG] Vocab size:", len(nodename2idx))
 
     return [(edges, nodes)], nodename2idx

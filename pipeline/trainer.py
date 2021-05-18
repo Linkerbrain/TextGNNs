@@ -32,6 +32,19 @@ class Trainer():
 
         self.loss = nn.CrossEntropyLoss()
 
+    def update_data(self, data):
+        """
+        QUICK UGFLY IMPLEMENTATION
+        """
+        if self.classify_transductively:
+            self.graph = data.graph.to(self.device)
+            self.train_idx, self.val_idx, self.test_idx = data.get_tvt_indices()
+            self.train_idx = torch.tensor(self.train_idx, dtype=torch.long).to(self.device)
+            self.val_idx = torch.tensor(self.val_idx, dtype=torch.long).to(self.device)
+            self.test_idx = torch.tensor(self.test_idx, dtype=torch.long).to(self.device)
+        else:
+            self.train_loader, self.val_loader, self.test_loader = data.get_tvt_dataloaders(batch_size=config["batch_size"])
+
     def train_epoch(self):
         self.model.train()
         self.optimizer.zero_grad()
