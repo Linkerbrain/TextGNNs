@@ -15,9 +15,9 @@ import pandas as pd
 """
 Trains and Tests according to the config specified in config.py
 """
-labeled_amounts = [400] # 80
-unlabeled_amounts = [1000] # [40, 100, 200, 300, 400, 600, 1000] # 40
-seeds = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+labeled_amounts = [400]
+unlabeled_amounts = [i * 4 for i in [10, 25, 50, 75, 100, 150, 250, 400, 600, 800, 1000, 1500]]
+seeds = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 repeats_per_seed = 1
 
 def evaluate_current_config(docs, labels, tvt_idx, verbose=True):
@@ -66,7 +66,7 @@ transductive_settings = {
             "window_size" : 10
         }
     },
-    "lr" : 0.02,
+    "lr" : 0.01,
     "terminate_patience" : 8,
 }
 
@@ -84,33 +84,108 @@ inductive_settings = {
 
 models = [
     {
-        "test_name" : "2 layer GCN with edge weights",
+        "test_name" : "2 layer GCN",
         "embedding_layer" : 300,
         "features_as_onehot" : False, 
         "model" : {
             "name" : "gcn",
             "kwargs" : {
                 "layer_dims" : [80],
-                "dropout" : 0.4,
+                "dropout" : 0.5,
                 "use_edge_weights" : True,
                 "custom_impl" : False
             }
         },
     },
     {
-        "test_name" : "2 layer GCN without edge weights",
+        "test_name" : "2 layer GCN without Edge Weights",
         "embedding_layer" : 300,
         "features_as_onehot" : False, 
         "model" : {
             "name" : "gcn",
             "kwargs" : {
                 "layer_dims" : [80],
-                "dropout" : 0.4,
+                "dropout" : 0.5,
                 "use_edge_weights" : False,
                 "custom_impl" : False
             }
         },
     },
+    # {
+    #     "test_name" : "3 layer GCN",
+    #     "embedding_layer" : 300,
+    #     "features_as_onehot" : False, 
+    #     "model" : {
+    #         "name" : "gcn",
+    #         "kwargs" : {
+    #             "layer_dims" : [20, 20],
+    #             "dropout" : 0.5,
+    #             "use_edge_weights" : True,
+    #             "custom_impl" : False
+    #         }
+    #     },
+    # },
+]
+
+def test_all_models(results, docs, labels, tvt_idx, save_info):
+    for model in models:
+        update_config(model)
+
+        print("Working on " + config["test_name"] + ", " + config["ductive"] + "ductively!")
+
+        try:
+            result = evaluate_current_config(docs, labels, tvt_idx, verbose=True)
+            results["test_name"].append(config["test_name"])
+            results["acc"].append(result)
+            results["ductive"].append(config["ductive"])
+            for key, value in save_info.items():
+                if key in results:
+                    results[key].append(value)
+                else:
+                    results[key] = [value]
+            save_dic(results)
+        except KeyboardInterrupt:
+            exit()
+        except Exception as e:
+            print(config["test_name"], "gone wrong! Error:", e)
+    
+    return results
+
+def save_dic(results):
+    pd.DataFrame(results).to_csv("./results/"+config["experiment_name"]+".csv")
+
+def main():
+
+    results = {
+        "test_name" : [],
+        "acc" : [],
+        "ductive" : []
+    }
+
+    for seed in seeds:
+        for unlabeled_amount in unlabeled_amounts:
+            for labeled_amount in labeled_amounts:
+                info_to_save = {
+                    "seed" : seed,
+                    "unlabeled_amount" : unlabeled_amount,
+                    "labeled_amount" : labeled_amount
+                }
+
+                indices_name = str(seed) + "_" + str(labeled_amount) + "lab" + str(unlabeled_amount) + "unlab"
+                update_config({"indices" : indices_name})
+                docs, labels, tvt_idx = load_data()
+
+                for i in range(repeats_per_seed):
+                    update_config(transductive_settings)
+                    results = test_all_models(results, docs, labels, tvt_idx, info_to_save)
+
+                    # update_config(inductive_settings)
+                    # results = test_all_models(results, docs, labels, tvt_idx, info_to_save)
+
+if __name__ == "__main__":
+    main()
+
+
     # {
     #     "test_name" : "300 20 GCN",
     #     "embedding_layer" : 300,
@@ -487,62 +562,3 @@ models = [
     #         }
     #     },
     # }
-]
-
-def test_all_models(results, docs, labels, tvt_idx, save_info):
-    for model in models:
-        update_config(model)
-
-        print("Working on " + config["test_name"] + ", " + config["ductive"] + "ductively!")
-
-        try:
-            result = evaluate_current_config(docs, labels, tvt_idx, verbose=True)
-            results["test_name"].append(config["test_name"])
-            results["acc"].append(result)
-            results["ductive"].append(config["ductive"])
-            for key, value in save_info.items():
-                if key in results:
-                    results[key].append(value)
-                else:
-                    results[key] = [value]
-            save_dic(results)
-        except KeyboardInterrupt:
-            exit()
-        except Exception as e:
-            print(config["test_name"], "gone wrong! Error:", e)
-    
-    return results
-
-def save_dic(results):
-    pd.DataFrame(results).to_csv("./results/"+config["experiment_name"]+".csv")
-
-def main():
-
-    results = {
-        "test_name" : [],
-        "acc" : [],
-        "ductive" : []
-    }
-
-    for seed in seeds:
-        for unlabeled_amount in unlabeled_amounts:
-            for labeled_amount in labeled_amounts:
-                info_to_save = {
-                    "seed" : seed,
-                    "unlabeled_amount" : unlabeled_amount,
-                    "labeled_amount" : labeled_amount
-                }
-
-                indices_name = str(seed) + "_" + str(labeled_amount) + "lab" + str(unlabeled_amount) + "unlab"
-                update_config({"indices" : indices_name})
-                docs, labels, tvt_idx = load_data()
-
-                for i in range(repeats_per_seed):
-                    update_config(transductive_settings)
-                    results = test_all_models(results, docs, labels, tvt_idx, info_to_save)
-
-                    # update_config(inductive_settings)
-                    # results = test_all_models(results, docs, labels, tvt_idx, info_to_save)
-
-if __name__ == "__main__":
-    main()

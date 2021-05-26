@@ -1,4 +1,8 @@
 from collections import defaultdict
+from config import config
+
+def docname(i):
+    return "___DOC"+str(i)+"___"
 
 def count_co_occurences(doc, window_size, return_count=False, co_occurences=None):
 
@@ -17,10 +21,23 @@ def count_co_occurences(doc, window_size, return_count=False, co_occurences=None
         return co_occurences, window_count
     return co_occurences
     
-def create_idx_mapping(list):
+def create_idx_mapping(list, offset=0):
     index_mapping = {}
 
     for i, element in enumerate(list):
-        index_mapping[element] = i
+        index_mapping[element] = i + offset
+
+    # print([str(a)+": "+str(b) for i, (a, b) in enumerate(index_mapping.items()) if i < 50])
 
     return index_mapping
+
+# def create_idx_mapping(list):
+#     index_mapping = {}
+
+#     for element in list:
+#         if element not in index_mapping:
+#             index_mapping[element] = len(index_mapping)
+
+#     print([str(a)+": "+str(b) for i, (a, b) in enumerate(index_mapping.items()) if i < 50])
+
+#     return index_mapping

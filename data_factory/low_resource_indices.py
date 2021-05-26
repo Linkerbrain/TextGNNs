@@ -6,9 +6,9 @@ BASE_PATH = r'C:\Users\Lodewijk\Desktop\scriptie2\GNNdocs\clean_data\indices\reu
 
 TRAIN_AMOUNTS = [18, 36, 90, 180, 360, 720]
 VAL_AMOUNTS = [2, 4, 10, 20, 40, 80]
-TEST_AMOUNTS = [10, 25, 50, 75, 100, 150, 250, 500]
+TEST_AMOUNTS = [10, 25, 50, 75, 100, 150, 250, 400, 600, 800, 1000, 1500]
 
-for seed in range(10):
+for seed in range(15):
     # get labels
     label_indices = defaultdict(list)
     with open(DATA_FILE, 'r') as input_f:

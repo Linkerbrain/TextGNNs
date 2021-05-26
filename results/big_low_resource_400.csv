@@ -1,0 +1,6 @@
+,seed,unlabeled_amount,labeled_amount,test_name,ductive
+0,0,1000,400,their implementation (NO SELF LOOPS),trans
+1,0,1000,400,my implementation,trans
+2,1,1000,400,their implementation (NO SELF LOOPS),trans
+3,1,1000,400,my implementation,trans
+4,2,1000,400,their implementation (NO SELF LOOPS),trans

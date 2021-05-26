@@ -35,4 +35,4 @@ def co_occurence_graph(docs, window_size=2):
 
         graphs.append(graph)
 
-    return graphs, nodename2idx
+    return graphs

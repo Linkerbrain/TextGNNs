@@ -23,11 +23,14 @@ def main():
 
     best_val_loss = float('inf')
     time_since_best = 0
+    best_val_loss_acc = 0
     for i in range(config["epochs"]):
         train_loss, val_loss = trainer.train_epoch()
+        # if i % config["test_every"] == 0 and i > 0:
         test_acc = trainer.test()
-
         print("[epoch %02d] Train loss %.4f, Val loss %.4f, Test Acc %.4f" % (i, train_loss, val_loss, test_acc))
+        # else:
+        #     print("[epoch %02d] Train loss %.4f, Val loss %.4f" % (i, train_loss, val_loss))
 
         # Early stopping
         time_since_best += 1
@@ -35,9 +38,11 @@ def main():
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             time_since_best = 0
+            best_val_loss_acc = test_acc
 
         if config["terminate_early"] and time_since_best >= config["terminate_patience"]:
-            print("\n[RESULT!] Final test score: ", test_acc)
+            test_acc = trainer.test()
+            print("\n[RESULT!] Final test score: ", best_val_loss_acc)
             break
 
 

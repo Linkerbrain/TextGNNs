@@ -8,6 +8,7 @@ from config import config
 from .gcn import GCN
 from .simple_gcn import SimpleGCN
 from .gat import GAT
+from .sage import SAGE
 
 
 available_models = {
@@ -19,6 +20,9 @@ available_models = {
     },
     "gat" : {
         "class" : GAT,
+    },
+    "sage" : {
+        "class" : SAGE,
     }
 }
 
@@ -27,8 +31,8 @@ def create_model(dataset):
     output_shape = dataset.num_labels
 
     embed_layer = config["embedding_layer"]
-    if embed_layer and config["features_as_onehot"]:
-        raise AssertionError("[model] An embeddings layer only needs the index, turn off 'features_as_onehot'")
+    if embed_layer and config["repr_type"] != "index":
+        raise AssertionError("[model] An embeddings layer needs the input as indices, make sure config['repr_type'] == index")
 
     classify_graph = config["ductive"] == "in"
     head_settings = config["inductive_head"]
@@ -39,7 +43,9 @@ def create_model(dataset):
     core_model = available_models[config["model"]["name"]]["class"]
     core_model_kwargs = config["model"]["kwargs"]
 
-    model = ModelWrapper(input_shape, embed_layer, core_model, core_model_kwargs, output_shape, classify_graph, head_settings)
+    sampled_training = config["sampled_training"]
+
+    model = ModelWrapper(input_shape, embed_layer, core_model, core_model_kwargs, output_shape, classify_graph, head_settings, sampled_training)
 
     return model
 
@@ -47,7 +53,8 @@ class ModelWrapper(nn.Module):
     def __init__(self, input_shape, embed_layer, 
                     core_model, core_model_kwargs, 
                     output_shape,
-                    classify_graph, head_settings):
+                    classify_graph, head_settings,
+                    sampled_training):
         super(ModelWrapper, self).__init__()
 
         # Embedding layer
@@ -71,6 +78,8 @@ class ModelWrapper(nn.Module):
         # core model
         self.core = core_model(core_model_input, core_model_output, **core_model_kwargs)
 
+        self.sampled_training = sampled_training
+
         print("[model] Succesfully created model")
 
     def forward(self, data):
@@ -85,6 +94,29 @@ class ModelWrapper(nn.Module):
             return self.graph_classifier(x, data.batch)
         
         return x
+
+    # def forward(self, x, adjs):
+    #     # handle sampled graph
+        
+    #     if self.embedding_layer:
+    #         x = self.embedding_layer(x).squeeze()
+
+    #     x = self.core(x, adjs)
+
+    #     return x
+
+
+    def inference(self, x_all, subgraph_loader, device):
+        if not self.sampled_training:
+            raise NotImplementedError("[model] Inference is for sampled training with for example graphsage")
+        
+        if self.embedding_layer:
+            x_all = self.embedding_layer(x_all).squeeze()
+
+        x = self.core.inference(x_all, subgraph_loader, device)
+
+        return x
+
 
 class MLPHead(nn.Module):
     def __init__(self, layer_dims, pooling):

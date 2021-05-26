@@ -1,0 +1,12 @@
+,test_name,acc,ductive,seed,unlabeled_amount,labeled_amount
+0,2 layer GCN,0.725,trans,0,40,80
+1,3 layer GCN,0.8,trans,0,40,80
+2,2 layer GCN,0.72,trans,0,100,80
+3,3 layer GCN,0.8,trans,0,100,80
+4,2 layer GCN,0.72,trans,0,200,80
+5,3 layer GCN,0.79,trans,0,200,80
+6,2 layer GCN,0.72,trans,0,300,80
+7,3 layer GCN,0.8033333333333333,trans,0,300,80
+8,2 layer GCN,0.7575,trans,0,400,80
+9,3 layer GCN,0.82,trans,0,400,80
+10,2 layer GCN,0.68,trans,0,600,80

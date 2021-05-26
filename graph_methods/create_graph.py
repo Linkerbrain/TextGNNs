@@ -1,6 +1,7 @@
 from config import config
 
 from .pmi_tfidf import pmi_tfidf_graph
+from .text_gcn_impl import text_gcn_graph
 from .co_occurence import co_occurence_graph
 
 import numpy as np
@@ -9,6 +10,10 @@ available_graph_methods = {
     "pmi_tfidf" : {
         "ductive" : "trans",
         "function" : pmi_tfidf_graph
+    },
+    "text_gcn_impl" : {
+        "ductive" : "trans",
+        "function" : text_gcn_graph
     },
     "co_occurence" : {
         "ductive" : "in",
@@ -26,11 +31,11 @@ def create_graphs(docs):
         raise AssertionError("[create_graph] The graph method does not match to the in/transductiveness of the config")
 
     # create graph
-    graphs, vocab = available_graph_methods[config["graph_method"]["name"]]["function"](docs=docs, **config["graph_method"]["kwargs"])
+    graphs = available_graph_methods[config["graph_method"]["name"]]["function"](docs=docs, **config["graph_method"]["kwargs"])
 
     print(graph_summary(graphs))
 
-    return graphs, vocab
+    return graphs
 
 def graph_summary(graphs):
     graph_count = len(graphs)
