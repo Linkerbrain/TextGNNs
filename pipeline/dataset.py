@@ -207,16 +207,48 @@ class DocumentGraphDataset():
 
         return train_loader, val_loader, test_loader
 
-    def get_tvt_samplers(self, batch_size, sizes):
-        train_sampler = NeighborSampler(self.graph.edge_index, node_idx=torch.tensor(self.train_idx, dtype=torch.long),
-                               sizes=sizes, batch_size=batch_size, shuffle=True, num_workers=12)
-        val_sampler = NeighborSampler(self.graph.edge_index, node_idx=torch.tensor(self.val_idx, dtype=torch.long),
-                               sizes=sizes, batch_size=batch_size, shuffle=True, num_workers=12)
-        test_sampler = NeighborSampler(self.graph.edge_index, node_idx=torch.tensor(self.test_idx, dtype=torch.long),
-                               sizes=sizes, batch_size=batch_size, shuffle=True, num_workers=12)
+    def make_sampler(self, node_idx, force_default=False):
+        if node_idx != None:
+            node_idx = torch.tensor(node_idx, dtype=torch.long)
+            sizes = config["sample_sizes"]
+        else:
+            sizes = [-1]
+        
+        if config["unsupervised_loss"] and not force_default:
+            if config["unsup_sampling_type"] == 'neighbor':
+                return PosNegNeighborSampler(self.graph.edge_index, node_idx=node_idx, sizes=sizes, batch_size=config["sample_batch_size"],
+                                 shuffle=True, num_workers=config["sampling_num_workers"])
+            else:
+                raise NotImplementedError("[dataset] The unsupervised sampling type %s has not been implemented" % config["unsup_sampling_type"])
 
-        entire_graph_sampler = NeighborSampler(self.graph.edge_index, node_idx=None, sizes=[-1],
-                                  batch_size=batch_size, shuffle=False,
-                                  num_workers=12)
+        return NeighborSampler(self.graph.edge_index, node_idx=node_idx, sizes=sizes, batch_size=config["sample_batch_size"],
+                                 shuffle=True, num_workers=config["sampling_num_workers"])
+
+    def get_tvt_samplers(self):
+        train_sampler = self.make_sampler(self.train_idx)
+        val_sampler = self.make_sampler(self.val_idx)
+        test_sampler = self.make_sampler(self.test_idx)
+
+        entire_graph_sampler = self.make_sampler(None)
 
         return train_sampler, val_sampler, test_sampler, entire_graph_sampler
+
+# Unsup things (should be in seperate file but this is quick for now)
+
+from torch_cluster import random_walk
+
+class PosNegNeighborSampler(NeighborSampler):
+    def sample(self, batch):
+        batch = torch.tensor(batch)
+        row, col, _ = self.adj_t.coo()
+
+        # For each node in `batch`, we sample a direct neighbor (as positive
+        # example) and a random node (as negative example):
+        pos_batch = random_walk(row, col, batch, walk_length=2,
+                                coalesced=False)[:, 1]
+
+        neg_batch = torch.randint(0, self.adj_t.size(1), (batch.numel(), ),
+                                  dtype=torch.long)
+
+        batch = torch.cat([batch, pos_batch, neg_batch], dim=0)
+        return super(PosNegNeighborSampler, self).sample(batch)

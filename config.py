@@ -5,7 +5,7 @@ config = {
     # Data Settings
     "data_base_path" : r'./clean_data/',
     "dataset" : "reutersENmin5",
-    "indices" : "3_80lab1600unlab", # 'inplace' splits it according to settings below (otherwise from disk)
+    "indices" : "3_80lab600unlab", # 'inplace' splits it according to settings below (otherwise from disk)
 
     "idx_split" : [80, 20, 10],
 
@@ -15,7 +15,7 @@ config = {
     # Graph Vocab Settings
     "initial_repr" : "bag_of_words", # onehot or bag_of_words
     "repr_type" : "sparse_tensor", # 'sparse_tensor' or 'index'
-    'unique_document_entries' : True,
+    'unique_document_entries' : False,
 
     # Graph Settings
     "graph_method" : {
@@ -24,7 +24,7 @@ config = {
             "window_size" : 10,
             "wordword_edges" : True,
             "worddoc_edges" : True,
-            "docdoc_edges" : True,
+            "docdoc_edges" : False,
             "docdoc_min_weight" : 0.3
         }
     },
@@ -32,12 +32,10 @@ config = {
     # Model Settings
     "embedding_layer" : None, # Size of feature to embed to, else "None"
     "model" : {
-        "name" : "gcn",
+        "name" : "sage",
         "kwargs" : {
-            "layer_dims" : [80],
-            "dropout" : 0.5,
-            "use_edge_weights" : True,
-            "custom_impl" : False,
+            "layer_dims" : [40],
+            "dropout" : 0.5
         }
     },
 
@@ -51,16 +49,30 @@ config = {
     },
 
     # GraphSAGE Settings
-    "sampled_training" : False,
-    "sample_batch_size" : 1024,
-    "sample_sizes" : [50, 10],
+    "sampled_training" : True,
+    "sample_batch_size" : 24,
+    "sample_sizes" : [10, 10],
+    "sampling_num_workers" : 2,
+
+    "unsupervised_loss" : True,
+    "unsup_sampling_type" : 'neighbor',
+    "unsup_sup_boost" : 20,
+    "sup_mode" : 'semi', # 'un', 'sup', 'semi'
+
+    "classify_features" : True,
+    "unsup_head" : {
+        "layer_dims" : [16],
+        "kwargs" : {
+            
+        }
+    },
 
     # Training Settings
     "try_gpu" : True,
-    "terminate_early" : True,
+    "terminate_early" : False,
     "terminate_patience" : 8, # stop if validation loss has not reached new high in x episodes
     "epochs" : 200,
-    "lr" : 0.01,
+    "lr" : 0.001,
     "test_every" : 1,
 }
 

@@ -21,18 +21,25 @@ class SAGE(torch.nn.Module):
         for i in range(self.num_layers):
             self.convs.append(SAGEConv(all_layer_dims[i], all_layer_dims[i+1]))
 
-    def forward(self, x, adjs):
+    def forward(self, x, adjs, return_penultimate=False):
         """
         Use a neighboursampler to make adjs which are samples from big graph
         """
         for i, (edge_index, _, size) in enumerate(adjs):
             x_target = x[:size[1]]  # Target nodes are always placed first.
+
+            if return_penultimate and i == self.num_layers - 1:
+                penultimate = x[:size[1]]
+            
             x = self.convs[i]((x, x_target), edge_index)
 
             if i != self.num_layers - 1:
                 x = F.relu(x)
                 x = F.dropout(x, p=self.dropout, training=self.training)
 
+
+        if return_penultimate:
+            return x, penultimate
         return x
 
     def inference(self, x_all, subgraph_loader, device):

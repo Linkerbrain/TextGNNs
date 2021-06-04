@@ -44,13 +44,16 @@ class Trainer():
 
         elif self.training_style == "graphsage":
             self.graph = data.graph.to(self.device)
+
+            self.graph.x = self.graph.x.to_dense() # pytorch sparse tensor do not support slicing which is needed for the sampling
+
             self.train_idx, self.val_idx, self.test_idx = data.get_tvt_indices()
             self.train_idx = torch.tensor(self.train_idx, dtype=torch.long).to(self.device)
             self.val_idx = torch.tensor(self.val_idx, dtype=torch.long).to(self.device)
             self.test_idx = torch.tensor(self.test_idx, dtype=torch.long).to(self.device)
 
             self.train_sampler, self.val_sampler, self.test_sampler, self.entire_graph_sampler = \
-                data.get_tvt_samplers(batch_size=config["sample_batch_size"], sizes=config["sample_sizes"])
+                data.get_tvt_samplers()
         
         else:
             raise NotImplementedError()
@@ -114,36 +117,128 @@ class Trainer():
         # GraphSAGE
         elif self.training_style == "graphsage":
             train_loss = 0
+            unsup_train_loss_pos = 0
+            unsup_train_loss_neg = 0
             val_loss = 0
+            unsup_val_loss_pos = 0
+            unsup_val_loss_neg = 0
+
+            unsup_test_pos = 0
+            unsup_test_neg = 0
+
+            # train on test
+            if config["unsupervised_loss"] and config['sup_mode'] != 'sup':
+                print("[model] Training ON TEST...")
+                for batch_size, n_id, adjs in self.test_sampler:
+                    # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
+                    adjs = [adj.to(self.device) for adj in adjs]
+
+                    self.optimizer.zero_grad()
+                    
+                    # for the unsupervised loss we assume the batch is concetatenated with the pos, then the neg nodes
+                    
+                    out, penultimate = self.model.sampled_forward(self.graph.x[n_id], adjs)
+
+                    out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
+                    pen, pos_pen, neg_pen = penultimate.split(penultimate.size(0) // 3, dim=0)
+
+                    # sup_loss = self.loss(out, self.graph.y[n_id[:batch_size // 3]]) * config["unsup_sup_boost"]
+
+                    pos_loss = -F.logsigmoid((pen * pos_pen).sum(-1)).mean() / config["unsup_sup_boost"]
+                    neg_loss = -F.logsigmoid(-(pen * neg_pen).sum(-1)).mean() / config["unsup_sup_boost"]
+
+                    unsup_test_pos += pos_loss
+                    unsup_test_neg += neg_loss
+
+                    loss = neg_loss
+
+                    loss.backward()
+                    self.optimizer.step()
+
             # Train
             print("[model] Training...")
             for batch_size, n_id, adjs in self.train_sampler:
-                print("Batch!")
                 # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
-                adjs = [adj.to(self.device) for adj in adjs]
+                adjs = [adj.to(self.device ) for adj in adjs]
 
                 self.optimizer.zero_grad()
-                out = self.model(self.graph.x[n_id], adjs)
                 
-                loss = self.loss(out, self.graph.y[n_id[:batch_size]])
+                if config["unsupervised_loss"]:
+                    # for the unsupervised loss we assume the batch is concetatenated with the pos, then the neg nodes
+                    
+                    out, penultimate = self.model.sampled_forward(self.graph.x[n_id], adjs)
+
+                    out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
+                    pen, pos_pen, neg_pen = penultimate.split(penultimate.size(0) // 3, dim=0)
+
+                    sup_loss = self.loss(out, self.graph.y[n_id[:batch_size // 3]])
+
+                    pos_loss = -F.logsigmoid((out * pos_out).sum(-1)).mean() / config["unsup_sup_boost"]
+                    neg_loss = -F.logsigmoid(-(out * neg_out).sum(-1)).mean() / config["unsup_sup_boost"]
+
+                    train_loss += sup_loss
+                    unsup_train_loss_pos += pos_loss
+                    unsup_train_loss_neg += neg_loss
+
+                    if config['sup_mode'] == 'semi':
+                        loss = sup_loss + neg_loss
+                    elif config['sup_mode'] == 'un':
+                        loss = neg_loss
+                    elif config['sup_mode'] == 'sup':
+                        loss = sup_loss
+                    else:
+                        raise NotImplementedError("[trainer] The sup mode %s has not been implemented" % config['sup_mode'])
+                else:
+                    out = self.model.sampled_forward(self.graph.x[n_id], adjs)
+
+                    loss = self.loss(out, self.graph.y[n_id[:batch_size]])
+                    train_loss += float(loss)
+
                 loss.backward()
                 self.optimizer.step()
 
-                train_loss += float(loss)
-                
             # Validate
             self.model.eval()
             print("[model] Validating...")
             for batch_size, n_id, adjs in self.val_sampler:
-                print("Batch!")
                 # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
                 adjs = [adj.to(self.device) for adj in adjs]
-                out = self.model(self.graph.x[n_id], adjs)
                 
-                loss = self.loss(out, self.graph.y[n_id[:batch_size]])
-                val_loss += float(loss)
+
+                if config["unsupervised_loss"]:
+                    # for the unsupervised loss we assume the batch is concetatenated with the pos, then the neg nodes
+                    out, penultimate = self.model.sampled_forward(self.graph.x[n_id], adjs)
+
+                    out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
+                    pen, pos_pen, neg_pen = penultimate.split(penultimate.size(0) // 3, dim=0)
+
+                    sup_loss = self.loss(out, self.graph.y[n_id[:batch_size // 3]])
+
+                    pos_loss = -F.logsigmoid((pen * pos_pen).sum(-1)).mean() / config["unsup_sup_boost"]
+                    neg_loss = -F.logsigmoid(-(pen * neg_pen).sum(-1)).mean() / config["unsup_sup_boost"]
+
+                    val_loss += sup_loss
+                    unsup_val_loss_pos += pos_loss
+                    unsup_val_loss_neg += neg_loss
+            
+                else:
+                    out = self.model.sampled_forward(self.graph.x[n_id], adjs)
+
+                    loss = self.loss(out, self.graph.y[n_id[:batch_size]])
+                    val_loss += float(loss)
 
         self.epoch += 1
+
+        # if config["sup_mode"] == 'sup':
+        #     config["sup_mode"] = 'un'
+        # elif config["sup_mode"] == 'un':
+        #     config["sup_mode"] = 'semi'
+        # elif config["sup_mode"] == 'semi':
+        #     config["sup_mode"] = 'sup'
+
+        if config["unsupervised_loss"]:
+            return train_loss, val_loss, unsup_train_loss_pos, unsup_train_loss_neg, unsup_val_loss_pos, unsup_val_loss_neg, unsup_test_pos, unsup_test_neg
+        
         return train_loss, val_loss
 
     def test(self):
@@ -177,7 +272,7 @@ class Trainer():
             return correct / total
 
         elif self.training_style == "graphsage":
-            # to use the entire graph we work layer by layer on everything at once since that's faster
+            # to use the entire graph we work layer by layer on everything at once since that's faster <- does not fit in memory
             # print("Inferencing..")
             # preds = self.model.inference(self.graph.x, self.entire_graph_sampler, self.device)
 
@@ -187,17 +282,44 @@ class Trainer():
             # correct = test_nodes_preds.eq(test_nodes_true).sum().item()
 
             # return float(correct / len(test_nodes_true))
+
             print("[model] Testing...")
             total_correct = 0
             total = 0
+            test_loss = 0
+            unsup_test_loss_pos = 0
+            unsup_test_loss_neg = 0
+
             for batch_size, n_id, adjs in self.test_sampler:
-                print("Batch!")
                 # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
                 adjs = [adj.to(self.device) for adj in adjs]
-                out = self.model(self.graph.x[n_id], adjs)
-                
-                total_correct += int(out.argmax(dim=-1).eq(self.graph.y[n_id[:batch_size]]).sum())
-                total += batch_size
+
+                if config["unsupervised_loss"]:
+                    out, penultimate = self.model.sampled_forward(self.graph.x[n_id], adjs)
+                else:
+                    out = self.model.sampled_forward(self.graph.x[n_id], adjs)
+
+                out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
+                # if config["unsupervised_loss"]:
+                #     # for the unsupervised loss we assume the batch is concetatenated with the pos, then the neg nodes
+                #     out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
+
+                #     sup_loss = self.loss(out, self.graph.y[n_id[:batch_size // 3]])
+
+                #     pos_loss = F.logsigmoid((out * pos_out).sum(-1)).mean()
+                #     neg_loss = F.logsigmoid(-(out * neg_out).sum(-1)).mean()
+
+                #     test_loss += sup_loss
+                #     unsup_test_loss_pos += pos_loss
+                #     unsup_test_loss_neg += neg_loss
+                    
+                #     total_correct += int(out.argmax(dim=-1).eq(self.graph.y[n_id[:batch_size // 3]]).sum())
+                # else:
+                total_correct += int(out.argmax(dim=-1).eq(self.graph.y[n_id[:batch_size // 3]]).sum())
+                total += batch_size // 3
+
+            if config["unsupervised_loss"]:
+                return total_correct / total, test_loss, unsup_test_loss_pos, unsup_test_loss_neg
 
             return total_correct / total
 

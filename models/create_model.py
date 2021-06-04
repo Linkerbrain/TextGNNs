@@ -71,6 +71,11 @@ class ModelWrapper(nn.Module):
 
             core_model_output = head_settings["layer_dims"][0]
             self.graph_classifier = MLPHead(layer_dims=MLPlayers, **head_settings["kwargs"])
+        elif config["classify_features"]:
+            MLPlayers = config["unsup_head"]["layer_dims"] + [output_shape]
+
+            core_model_output = config["unsup_head"]["layer_dims"][0]
+            self.graph_classifier = MLPClassifyer(layer_dims=MLPlayers, **config["unsup_head"]["kwargs"])
         else:
             self.graph_classifier = None
             core_model_output = output_shape
@@ -83,6 +88,9 @@ class ModelWrapper(nn.Module):
         print("[model] Succesfully created model")
 
     def forward(self, data):
+        if self.sampled_training:
+            raise AssertionError('[model] To process sampled data use sampled_forward instead')
+
         x, edge_index, edge_weights = data.x, data.edge_index, data.edge_attr
 
         if self.embedding_layer:
@@ -95,16 +103,27 @@ class ModelWrapper(nn.Module):
         
         return x
 
-    # def forward(self, x, adjs):
-    #     # handle sampled graph
+    def sampled_forward(self, x, adjs):
+        # handle sampled graph
         
-    #     if self.embedding_layer:
-    #         x = self.embedding_layer(x).squeeze()
+        if self.embedding_layer:
+            x = self.embedding_layer(x).squeeze()
 
-    #     x = self.core(x, adjs)
+        if config["unsupervised_loss"]:
+            x, penultimate = self.core(x, adjs, return_penultimate=True)
 
-    #     return x
+            if config["classify_features"]:
+                penultimate = x
+                x = self.graph_classifier(x)
 
+            return x, penultimate
+
+        x = self.core(x, adjs)
+
+        if config["classify_features"]:
+            x = self.graph_classifier(x)
+
+        return x
 
     def inference(self, x_all, subgraph_loader, device):
         if not self.sampled_training:
@@ -117,6 +136,27 @@ class ModelWrapper(nn.Module):
 
         return x
 
+
+class MLPClassifyer(nn.Module): # this should be merged with class below
+    def __init__(self, layer_dims):
+        super(MLPClassifyer, self).__init__()
+
+        self.num_layers = len(layer_dims)-1
+
+        self.layers = nn.ModuleList()
+        for i in range(self.num_layers):
+            linear_layer = torch.nn.Linear(layer_dims[i], layer_dims[i+1])
+            self.layers.append(linear_layer)
+
+    def forward(self, x):
+        for i in range(self.num_layers):
+            if i > 0:
+                x = F.dropout(x, training=self.training)
+            x = self.layers[i](x)
+            if i < self.num_layers-1:
+                x = nn.ReLU()(x)
+
+        return x
 
 class MLPHead(nn.Module):
     def __init__(self, layer_dims, pooling):
