@@ -21,6 +21,8 @@ def main():
 
     trainer = Trainer(dataset, model)
 
+    # trainer.save_initial_reps()
+
     best_val_loss = float('inf')
     time_since_best = 0
     best_val_loss_acc = 0
@@ -28,8 +30,8 @@ def main():
 
         # split for special debug printing
         if config["unsupervised_loss"]:
+            trainer.save_sage_reps()
             train_loss, val_loss, unsup_train_loss_pos, unsup_train_loss_neg, unsup_val_loss_pos, unsup_val_loss_neg, unsup_test_pos, unsup_test_neg = trainer.train_epoch()
-
 
             test_acc, test_loss, unsup_test_loss_pos, unsup_test_loss_neg = trainer.test()
 

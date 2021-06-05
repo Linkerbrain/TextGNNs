@@ -52,16 +52,16 @@ config = {
     "sampled_training" : True,
     "sample_batch_size" : 24,
     "sample_sizes" : [10, 10],
-    "sampling_num_workers" : 2,
+    "sampling_num_workers" : 1,
 
     "unsupervised_loss" : True,
     "unsup_sampling_type" : 'neighbor',
-    "unsup_sup_boost" : 20,
+    "unsup_sup_boost" : 2,
     "sup_mode" : 'semi', # 'un', 'sup', 'semi'
 
     "classify_features" : True,
     "unsup_head" : {
-        "layer_dims" : [16],
+        "layer_dims" : [80, 16, 8],
         "kwargs" : {
             
         }
@@ -72,7 +72,7 @@ config = {
     "terminate_early" : False,
     "terminate_patience" : 8, # stop if validation loss has not reached new high in x episodes
     "epochs" : 200,
-    "lr" : 0.001,
+    "lr" : 0.002,
     "test_every" : 1,
 }
 

@@ -4,6 +4,8 @@ import torch.nn as nn
 
 from config import config
 
+import pickle
+
 class Trainer():
     def __init__(self, data, model):
         self.device = "cuda" if config["try_gpu"] and torch.cuda.is_available() else "cpu"
@@ -126,10 +128,16 @@ class Trainer():
             unsup_test_pos = 0
             unsup_test_neg = 0
 
+            unsup_test_pos_test = 0
+            unsup_test_neg_test = 0
+
             # train on test
             if config["unsupervised_loss"] and config['sup_mode'] != 'sup':
-                print("[model] Training ON TEST...")
-                for batch_size, n_id, adjs in self.test_sampler:
+
+                train_test_seperation = len(self.test_sampler) / 2
+
+                print("[model] Training on TEST...")
+                for i, (batch_size, n_id, adjs) in enumerate(self.test_sampler):
                     # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
                     adjs = [adj.to(self.device) for adj in adjs]
 
@@ -144,16 +152,22 @@ class Trainer():
 
                     # sup_loss = self.loss(out, self.graph.y[n_id[:batch_size // 3]]) * config["unsup_sup_boost"]
 
-                    pos_loss = -F.logsigmoid((pen * pos_pen).sum(-1)).mean() / config["unsup_sup_boost"]
-                    neg_loss = -F.logsigmoid(-(pen * neg_pen).sum(-1)).mean() / config["unsup_sup_boost"]
+                    pos_loss = -F.logsigmoid((pen * pos_pen).sum(-1)).mean()
+                    neg_loss = -F.logsigmoid(-(pen * neg_pen).sum(-1)).mean()
 
-                    unsup_test_pos += pos_loss
-                    unsup_test_neg += neg_loss
+                    if i < train_test_seperation:
+                        unsup_test_pos_test += pos_loss
+                        unsup_test_neg_test += neg_loss
+                    else:
+                        unsup_test_pos += pos_loss
+                        unsup_test_neg += neg_loss
 
-                    loss = neg_loss
+                        loss = pos_loss + neg_loss
 
-                    loss.backward()
-                    self.optimizer.step()
+                        loss.backward()
+                        self.optimizer.step()
+
+            print("!!! UNSUP pos loss: %.4f, UNSUP neg loss: %.4f" % (unsup_test_pos_test, unsup_test_neg_test))
 
             # Train
             print("[model] Training...")
@@ -181,9 +195,9 @@ class Trainer():
                     unsup_train_loss_neg += neg_loss
 
                     if config['sup_mode'] == 'semi':
-                        loss = sup_loss + neg_loss
+                        loss = sup_loss + pos_loss + neg_loss
                     elif config['sup_mode'] == 'un':
-                        loss = neg_loss
+                        loss = pos_loss + neg_loss
                     elif config['sup_mode'] == 'sup':
                         loss = sup_loss
                     else:
@@ -229,6 +243,9 @@ class Trainer():
 
         self.epoch += 1
 
+        if self.epoch == 20:
+            config['sup_mode'] = 'sup'
+
         # if config["sup_mode"] == 'sup':
         #     config["sup_mode"] = 'un'
         # elif config["sup_mode"] == 'un':
@@ -240,6 +257,41 @@ class Trainer():
             return train_loss, val_loss, unsup_train_loss_pos, unsup_train_loss_neg, unsup_val_loss_pos, unsup_val_loss_neg, unsup_test_pos, unsup_test_neg
         
         return train_loss, val_loss
+
+    def save_initial_reps(self):
+        tosave = {"reps" : self.graph.x[self.test_idx], "y" : self.graph.y[self.test_idx]}
+
+        with open('xs_onehot.pickle', 'wb') as handle:
+            pickle.dump(tosave, handle)
+
+    def save_sage_reps(self):
+        self.model.eval()
+        print("Saving reps")
+
+        pens = []
+        ys = []
+        for i, (batch_size, n_id, adjs) in enumerate(self.test_sampler):
+            # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
+            adjs = [adj.to(self.device) for adj in adjs]
+
+            self.optimizer.zero_grad()
+            
+            # for the unsupervised loss we assume the batch is concetatenated with the pos, then the neg nodes
+            
+            out, penultimate = self.model.sampled_forward(self.graph.x[n_id], adjs)
+
+            out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
+            pen, pos_pen, neg_pen = penultimate.split(penultimate.size(0) // 3, dim=0)
+
+            y = self.graph.y[n_id[:batch_size // 3]]
+
+            pens.append(pen)
+            ys.append(y)
+
+        tosave = {"reps" : pens, "y" : ys}
+
+        with open('features_SEMI_LASTHOPE_epoch_%i.pickle' % self.epoch, 'wb') as handle:
+            pickle.dump(tosave, handle)
 
     def test(self):
         # This could be done in the train step as well since it does not require much extra calculation

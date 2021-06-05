@@ -6,6 +6,7 @@ from torch_geometric.data import DataLoader
 import numpy as np
 from collections import Counter
 from torch_geometric.data import NeighborSampler
+from torch_sparse import SparseTensor
 
 class DocumentGraphDataset():
     def __init__(self, docs, labels, tvt_idx, force_vocab=None):
@@ -216,13 +217,17 @@ class DocumentGraphDataset():
         
         if config["unsupervised_loss"] and not force_default:
             if config["unsup_sampling_type"] == 'neighbor':
-                return PosNegNeighborSampler(self.graph.edge_index, node_idx=node_idx, sizes=sizes, batch_size=config["sample_batch_size"],
-                                 shuffle=True, num_workers=config["sampling_num_workers"])
+                
+                adj_t = SparseTensor(row=self.graph.edge_index[0], col=self.graph.edge_index[1],
+                                        value=self.graph.edge_attr,
+                                        sparse_sizes=(self.graph.num_nodes, self.graph.num_nodes)).t()
+                return PosNegNeighborSampler(edge_index=adj_t, node_idx=node_idx, sizes=sizes, batch_size=config["sample_batch_size"],
+                                 shuffle=True, num_doc_nodes=len(self.docs), edge_weights=self.graph.edge_attr)
             else:
                 raise NotImplementedError("[dataset] The unsupervised sampling type %s has not been implemented" % config["unsup_sampling_type"])
 
         return NeighborSampler(self.graph.edge_index, node_idx=node_idx, sizes=sizes, batch_size=config["sample_batch_size"],
-                                 shuffle=True, num_workers=config["sampling_num_workers"])
+                                 shuffle=True, num_workers=config["sampling_num_workers"], edge_attr=self.graph.edge_attr)
 
     def get_tvt_samplers(self):
         train_sampler = self.make_sampler(self.train_idx)
@@ -238,6 +243,12 @@ class DocumentGraphDataset():
 from torch_cluster import random_walk
 
 class PosNegNeighborSampler(NeighborSampler):
+    def __init__(self, num_doc_nodes, edge_weights, **kwargs):
+        super(PosNegNeighborSampler, self).__init__(**kwargs)
+
+        self.num_doc_nodes = num_doc_nodes
+        self.edge_weights = edge_weights
+
     def sample(self, batch):
         batch = torch.tensor(batch)
         row, col, _ = self.adj_t.coo()
@@ -247,8 +258,78 @@ class PosNegNeighborSampler(NeighborSampler):
         pos_batch = random_walk(row, col, batch, walk_length=2,
                                 coalesced=False)[:, 1]
 
-        neg_batch = torch.randint(0, self.adj_t.size(1), (batch.numel(), ),
+        # print("batch:", batch)
+
+        weighted_adj = SparseTensor(row=row, col=col, value=self.edge_weights.cpu())
+
+        # print(len(self.edge_weights))
+        # print(len(row))
+
+        # print("adj:", self.adj_t)
+        # print("weighted:", weighted_adj)
+
+        connections = (weighted_adj.to_dense()).numpy() # [:self.num_doc_nodes]
+        # print("connections:", connections)
+        # print("connections of first doc:", connections[0])
+        # print("batch:", batch.numpy())
+        # print("batch sums:", connections[batch.numpy()])
+
+
+        # Quick non-optimised implementation since this can be run in parralel anyway
+        friends = []
+        for doc in batch:
+            doc_number = doc.numpy()
+
+            word_conns = connections[doc_number][self.num_doc_nodes:]
+
+            # print("doc #:", doc_number)
+            # print("connections:", word_conns, "(%i in total)" % sum(word_conns))
+
+            # these where's can now be removed now we use p I know ok
+            mask = np.where(word_conns > 0)[0]
+            if len(mask) == 0:
+                random_doc_back = np.random.randint(0, self.num_doc_nodes) # if the word is exclusive to that doc choose a random doc, this should not happen often
+                friends.append(random_doc_back)
+                continue
+
+            p = word_conns[mask] / sum(word_conns[mask])
+            random_word = np.random.choice(mask, p=p) + self.num_doc_nodes
+            # print("chosen word:", random_word)
+
+            rwords_conns = connections[random_word]
+
+            rwords_conns_to_docs = rwords_conns[:self.num_doc_nodes]
+            # print("That word is connected to the docs:", rwords_conns_to_docs, "(%i in total)" % sum(rwords_conns_to_docs))
+
+            mask = np.where(rwords_conns_to_docs > 0)[0]
+            mask = mask[mask != doc_number]
+            p = rwords_conns_to_docs[mask] / sum(rwords_conns_to_docs[mask])
+            
+            if len(mask) == 0:
+                random_doc_back = np.random.randint(0, self.num_doc_nodes) # if the word is exclusive to that doc choose a random doc, this should not happen often
+            else:
+                random_doc_back = np.random.choice(mask, p=p)
+
+            friends.append(random_word)
+            # print("%i CHOSEN DOC FRIEND:" % doc_number, random_doc_back)
+
+            # my_conns = connections[doc_number]
+            # her_conns = connections[random_doc_back]
+
+            # print("We have %i words in common" % (sum((my_conns > 0) & (her_conns > 0))))
+
+            # print("[", end="")
+            # for j in range(self.num_doc_nodes):
+            #     their_conns = sum((my_conns > 0) & (connections[j] > 0))
+            #     their_conns = sum((my_conns > 0) & (connections[j] > 0))
+            #     print(their_conns, end=", ")
+
+        pos_batch = torch.tensor(friends, dtype=torch.long)
+
+        neg_batch = torch.randint(self.num_doc_nodes, self.adj_t.size(1), (batch.numel(), ),
                                   dtype=torch.long)
+        # neg_batch = torch.randint(0, self.adj_t.size(1), (batch.numel(), ),
+        #                           dtype=torch.long)
 
         batch = torch.cat([batch, pos_batch, neg_batch], dim=0)
         return super(PosNegNeighborSampler, self).sample(batch)
