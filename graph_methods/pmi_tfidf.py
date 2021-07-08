@@ -5,7 +5,7 @@ from config import config
 from collections import Counter, defaultdict
 from math import log
     
-def pmi_tfidf_graph(docs, window_size=10, wordword_edges=True, worddoc_edges=True, docdoc_edges=True, docdoc_min_weight=0):
+def pmi_tfidf_graph(docs, window_size=10, wordword_edges=True, worddoc_edges=True, docdoc_edges=True, average_docdoc_conns=None, average_wordword_conns=None):
     all_words = [word for doc in docs for word in doc]
     all_unique_words = list(set(all_words))
 
@@ -35,14 +35,29 @@ def pmi_tfidf_graph(docs, window_size=10, wordword_edges=True, worddoc_edges=Tru
             total_window_count += window_count
 
         # combine and calculate pmi
+
+        pmi_scores = {}
+
         for ((word_a, word_b), count) in co_occurences.items():
             # pmi = log ( p(x,y) / (p(x)p(y)) )
-            pmi = log((count / total_window_count) / ((freq[word_a] * freq[word_b]) / (word_count ** 2))) # TODO: not tested if correct
+            pxy = count / total_window_count
+            px = freq[word_a] / word_count
+            py = freq[word_b] / word_count
+            pmi = log(pxy/(px * py))
+            # pmi = log((count / total_window_count) / ((freq[word_a] * freq[word_b]) / (word_count ** 2))) # TODO: not tested if correct
 
-            if pmi <= 0:
+            pmi_scores[(word_a, word_b)] = pmi
+
+        min_pmi = 0
+        if average_wordword_conns:
+            if len(pmi_scores) > average_wordword_conns*num_words:
+                min_pmi = max(0, sorted(pmi_scores.values(), reverse=True)[average_wordword_conns*num_words])
+
+        for ((word_a, word_b), pmi) in pmi_scores.items():
+            if pmi <= min_pmi:
                 continue
             
-            word_a_id =  word2idx[word_a] # np.random.randint(len(docs), len(docs)+len(all_unique_words))
+            word_a_id = word2idx[word_a] # np.random.randint(len(docs), len(docs)+len(all_unique_words))
             word_b_id = word2idx[word_b]
 
             # add twice for symmetry
@@ -102,7 +117,11 @@ def pmi_tfidf_graph(docs, window_size=10, wordword_edges=True, worddoc_edges=Tru
                     else:
                         overlapping_words[(doc_list[j], doc_list[i])] += 1 / doc_list_len
 
-        # combine and calculate pmi
+        docdoc_min_weight = 0
+        if average_docdoc_conns:
+            if len(overlapping_words) > average_docdoc_conns*num_docs:
+                docdoc_min_weight = max(0, sorted(overlapping_words.values(), reverse=True)[average_docdoc_conns*num_docs])
+
         num_docdoc_edges = 0
         for ((doc_a_idx, doc_b_idx), count) in overlapping_words.items():
             if count < docdoc_min_weight:

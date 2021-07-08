@@ -4,11 +4,15 @@ import torch.nn.functional as F
 from torch_geometric.nn import global_mean_pool, global_max_pool
 
 from config import config
+from torch.nn import Linear
 
 from .gcn import GCN
 from .simple_gcn import SimpleGCN
 from .gat import GAT
 from .sage import SAGE
+from .gcn2 import GCN2
+from .deepergcn import DeeperGCN
+from .gatv2 import GATV2
 
 
 available_models = {
@@ -23,7 +27,16 @@ available_models = {
     },
     "sage" : {
         "class" : SAGE,
-    }
+    },
+    "gcn2" : {
+        "class" : GCN2,
+    },
+    "deepergcn" : {
+        "class" : DeeperGCN,
+    },
+    "gatv2" : {
+        "class" : GATV2,
+    },
 }
 
 def create_model(dataset):
@@ -31,8 +44,13 @@ def create_model(dataset):
     output_shape = dataset.num_labels
 
     embed_layer = config["embedding_layer"]
+    lin_layer = config["linear_layer"]
+
     if embed_layer and config["repr_type"] != "index":
         raise AssertionError("[model] An embeddings layer needs the input as indices, make sure config['repr_type'] == index")
+
+    if lin_layer and config["repr_type"] == "index":
+        raise AssertionError("[model] A linear layer needs a tensor, config['repr_type'] != index")
 
     classify_graph = config["ductive"] == "in"
     head_settings = config["inductive_head"]
@@ -45,12 +63,12 @@ def create_model(dataset):
 
     sampled_training = config["sampled_training"]
 
-    model = ModelWrapper(input_shape, embed_layer, core_model, core_model_kwargs, output_shape, classify_graph, head_settings, sampled_training)
+    model = ModelWrapper(input_shape, embed_layer, lin_layer, core_model, core_model_kwargs, output_shape, classify_graph, head_settings, sampled_training)
 
     return model
 
 class ModelWrapper(nn.Module):
-    def __init__(self, input_shape, embed_layer, 
+    def __init__(self, input_shape, embed_layer, lin_layer,
                     core_model, core_model_kwargs, 
                     output_shape,
                     classify_graph, head_settings,
@@ -60,9 +78,15 @@ class ModelWrapper(nn.Module):
         # Embedding layer
         if embed_layer:
             self.embedding_layer = nn.Embedding(input_shape, embed_layer)
+            self.linear_layer = None
             core_model_input = embed_layer
+        elif lin_layer:
+            self.linear_layer = Linear(input_shape, lin_layer)
+            self.embedding_layer = None
+            core_model_input = lin_layer
         else:
             self.embedding_layer = None
+            self.linear_layer = None
             core_model_input = input_shape
 
         # Graph classification head for inductive training
@@ -71,7 +95,7 @@ class ModelWrapper(nn.Module):
 
             core_model_output = head_settings["layer_dims"][0]
             self.graph_classifier = MLPHead(layer_dims=MLPlayers, **head_settings["kwargs"])
-        elif config["classify_features"]:
+        elif config["sampled_training"] and config["classify_features"]:
             MLPlayers = config["unsup_head"]["layer_dims"] + [output_shape]
 
             core_model_output = config["unsup_head"]["layer_dims"][0]
@@ -95,6 +119,9 @@ class ModelWrapper(nn.Module):
 
         if self.embedding_layer:
             x = self.embedding_layer(x).squeeze()
+        
+        if self.linear_layer:
+            x = self.linear_layer(x).relu()
 
         x = self.core(x, edge_index, edge_weights)
 
@@ -150,8 +177,8 @@ class MLPClassifyer(nn.Module): # this should be merged with class below
 
     def forward(self, x):
         for i in range(self.num_layers):
-            if i > 0:
-                x = F.dropout(x, training=self.training)
+            # if i > 0:
+            #     x = F.dropout(x, training=self.training)
             x = self.layers[i](x)
             if i < self.num_layers-1:
                 x = nn.ReLU()(x)

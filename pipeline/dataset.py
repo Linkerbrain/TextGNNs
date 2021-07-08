@@ -8,9 +8,15 @@ from collections import Counter
 from torch_geometric.data import NeighborSampler
 from torch_sparse import SparseTensor
 
+from collections import defaultdict
+
 class DocumentGraphDataset():
     def __init__(self, docs, labels, tvt_idx, force_vocab=None):
-        (self.train_idx, self.val_idx, self.test_idx) = tvt_idx
+        if len(tvt_idx) == 3:
+            (self.train_idx, self.val_idx, self.test_idx) = tvt_idx
+            self.train_unlab_idx = None
+        else:
+            (self.train_idx, self.val_idx, self.test_idx, self.train_unlab_idx) = tvt_idx
         
         self.transductive = config["ductive"] == "trans"
 
@@ -46,14 +52,17 @@ class DocumentGraphDataset():
         print("[dataset] Removed %i/%i words because they were not in vocab" % (failed, total))
         return docs
 
+    def create_vocab(self, nodes):
+        word_vocab = {}
+        for nodename in list(set(nodes)):
+            if nodename[:6] != "___DOC":
+                word_vocab[nodename] = len(word_vocab)
+        return word_vocab
+
     def embed_nodes(self, nodes, word_vocab=None):
         # give number to each word (if not already provided)
         if not word_vocab:
-            word_vocab = {}
-            for nodename in list(set(nodes)):
-                if nodename[:6] != "___DOC":
-                    word_vocab[nodename] = len(word_vocab)
-
+            word_vocab = self.create_vocab(nodes)
         vocab_size = len(word_vocab)
 
         # one hot across vocab and docs
@@ -66,17 +75,21 @@ class DocumentGraphDataset():
                 # documents map after vocab
                 else:
                     doc_id = int(nodename[6:-3])
-                    if config["unique_document_entries"]:
+                    if config["unique_bag_entries"]:
                         idxs.append(vocab_size + doc_id)
                     else:
                         idxs.append(vocab_size)
 
             if config["repr_type"] == "index":
-                feature_size = max(idxs)+1
+                feature_size = max(vocab_size, max(idxs)+1)
                 return torch.tensor(idxs, dtype=torch.long), feature_size
+            elif config["repr_type"] == "dense":
+                feature_size = max(vocab_size, max(idxs)+1)
+                onehots = torch.sparse_coo_tensor((range(len(idxs)), idxs), [1 for _ in range(len(idxs))], size=(len(idxs), feature_size), dtype=torch.float)
+                return onehots.to_dense(), feature_size
 
             elif config["repr_type"] == "sparse_tensor":
-                feature_size = max(idxs)+1
+                feature_size = max(vocab_size, max(idxs)+1)
                 onehots = torch.sparse_coo_tensor((range(len(idxs)), idxs), [1 for _ in range(len(idxs))], size=(len(idxs), feature_size), dtype=torch.float)
                 return onehots, feature_size
 
@@ -101,12 +114,16 @@ class DocumentGraphDataset():
                     # make bag of words
                     word_counts = Counter(self.docs[doc_id])
                     for word, count in word_counts.items():
-                        node_indices.append(i)
-                        feature_indices.append(word_vocab[word])
-                        values.append(count)
+                        if count >= config["min_count_for_bag"]:
+                            node_indices.append(i)
+                            feature_indices.append(word_vocab[word])
+                            if config["binary_bag"]:
+                                values.append(1)
+                            else:
+                                values.append(count)
 
                     # add document entry
-                    if config["unique_document_entries"]:
+                    if config["unique_bag_entries"]:
                         node_indices.append(i)
                         feature_indices.append(vocab_size + doc_id)
                         values.append(1)
@@ -117,31 +134,86 @@ class DocumentGraphDataset():
                         
             if config["repr_type"] == "sparse_tensor":
                 feature_size = max(feature_indices)+1
+                print("[dataset] Feature size: %i" % feature_size)
                 onehots = torch.sparse_coo_tensor((node_indices, feature_indices), values, dtype=torch.float)
                 return onehots, feature_size
-
+            elif config["repr_type"] == "dense":
+                feature_size = max(feature_indices)+1
+                print("[dataset] Feature size: %i" % feature_size)
+                onehots = torch.sparse_coo_tensor((node_indices, feature_indices), values, dtype=torch.float)
+                return onehots.to_dense(), feature_size
             else:
                 raise NotImplementedError("[dataset] The repr type %s has not been implemented for method %s" % (config["repr_type"], config["initial_repr"]))
 
+        elif config["initial_repr"] == "bag_of_documents" or config["initial_repr"] == "both_bags":
+            docs_each_word_is_in = defaultdict(lambda: defaultdict(int))
+
+            for i, doc in enumerate(self.docs):
+                for word in doc:
+                    docs_each_word_is_in[word][i] += 1
+
+            docs_size = len(self.docs)
+
+            node_indices = []
+            feature_indices = []
+            values = []
+            for i, nodename in enumerate(nodes):
+                # words map to boolean list of the docs they be in
+                if nodename[:6] != "___DOC":
+                    for doc_id, count in docs_each_word_is_in[nodename].items():
+                        if count >= config["min_count_for_bag"]:
+                            node_indices.append(i)
+                            feature_indices.append(doc_id)
+                            if config["binary_bag"]:
+                                values.append(1)
+                            else:
+                                values.append(count)
+
+                    # add vocab entry
+                    if config["unique_bag_entries"] or config["initial_repr"] == "both_bags":
+                        node_indices.append(i)
+                        feature_indices.append(docs_size + word_vocab[nodename])
+                        values.append(1)
+                    else:
+                        node_indices.append(i)
+                        feature_indices.append(docs_size)
+                        values.append(1)
+
+                # documents map to their id
+                else:
+                    doc_id = int(nodename[6:-3])
+
+                    node_indices.append(i)
+                    feature_indices.append(doc_id)
+                    values.append(1)
+
+                    if config["initial_repr"] == "both_bags":
+                        # make bag of words
+                        word_counts = Counter(self.docs[doc_id])
+                        for word, count in word_counts.items():
+                            if count >= config["min_count_for_bag"]:
+                                node_indices.append(i)
+                                feature_indices.append(docs_size + word_vocab[word])
+                                if config["binary_bag"]:
+                                    values.append(1)
+                                else:
+                                    values.append(count)
+                        
+            if config["repr_type"] == "sparse_tensor":
+                feature_size = max(feature_indices)+1
+                print("[dataset] Feature size: %i" % feature_size)
+                onehots = torch.sparse_coo_tensor((node_indices, feature_indices), values, dtype=torch.float)
+                return onehots, feature_size
+            elif config["repr_type"] == "dense":
+                feature_size = max(feature_indices)+1
+                print("[dataset] Feature size: %i" % feature_size)
+                onehots = torch.sparse_coo_tensor((node_indices, feature_indices), values, dtype=torch.float)
+                return onehots.to_dense(), feature_size
+            else:
+                raise NotImplementedError("[dataset] The repr type %s has not been implemented for method %s" % (config["repr_type"], config["initial_repr"]))
 
         else:
             raise NotImplementedError("[dataset] The initial representation in the config (%s) is not implemented" % config["initial_repr"])
-
-    def nodenames_to_tensors(self, nodes, vocab):
-        vocab_size = max(vocab.values()) + 1
- 
-        idxs = []
-        for node in nodes:
-            if node in vocab:
-                idxs.append(vocab[node])
-            else:
-                raise AssertionError("The generated vocab does not include node name %s" % (node))
-
-        if config["features_as_onehot"]:
-            onehots = torch.sparse_coo_tensor((range(len(idxs)), idxs), [1 for _ in range(len(idxs))], size=(len(idxs), vocab_size), dtype=torch.float)
-            return onehots, vocab_size
-
-        return torch.tensor(idxs, dtype=torch.long), vocab_size
 
     def labels_to_tensors(self, labels):
         unique_labels = list(set(labels))
@@ -162,6 +234,7 @@ class DocumentGraphDataset():
         graphs = create_graphs(docs)
 
         ((edge_indices, edge_weights), nodes) = graphs[0]
+        self.nodes = nodes
 
         torch_edges = torch.tensor(edge_indices, dtype=torch.long)
         torch_edge_weights = torch.tensor(edge_weights, dtype=torch.float)
@@ -178,8 +251,10 @@ class DocumentGraphDataset():
         """
         Inductive preperation
         """
-        graphs, vocab = create_graphs(docs)
+        graphs = create_graphs(docs)
         label_numbers, num_labels = self.labels_to_tensors(labels)
+
+        word_vocab = self.create_vocab([words for doc in docs for words in doc])
 
         processed_graphs = []
 
@@ -189,7 +264,7 @@ class DocumentGraphDataset():
             torch_edges = torch.tensor(edge_indices, dtype=torch.long)
             torch_edge_weights = torch.tensor(edge_weights, dtype=torch.float)
 
-            node_numbers, vocab_size = self.nodenames_to_tensors(nodes, vocab)
+            node_numbers, vocab_size = self.embed_nodes(nodes, word_vocab=word_vocab)
 
             graph = Data(x=node_numbers, edge_index=torch_edges, edge_attr=torch_edge_weights, y=label)
             graph.num_nodes = len(nodes)
@@ -227,7 +302,7 @@ class DocumentGraphDataset():
                 raise NotImplementedError("[dataset] The unsupervised sampling type %s has not been implemented" % config["unsup_sampling_type"])
 
         return NeighborSampler(self.graph.edge_index, node_idx=node_idx, sizes=sizes, batch_size=config["sample_batch_size"],
-                                 shuffle=True, num_workers=config["sampling_num_workers"], edge_attr=self.graph.edge_attr)
+                                 shuffle=True, num_workers=config["sampling_num_workers"])
 
     def get_tvt_samplers(self):
         train_sampler = self.make_sampler(self.train_idx)

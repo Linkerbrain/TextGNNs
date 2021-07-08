@@ -1,6 +1,7 @@
 from config import config
 from random import shuffle
 import numpy as np
+import os
 
 
 def load_tsv_data(path):
@@ -58,12 +59,16 @@ def load_data():
         val_idx = load_csv_idx(indices_path + "val.txt")
         test_idx = load_csv_idx(indices_path + "test.txt")
 
-    all_idx = train_idx + val_idx + test_idx
+        train_unlab_idx = load_csv_idx(indices_path + "train_unlab.txt")
+
+
+    all_idx = train_idx + val_idx + test_idx + train_unlab_idx
     ordered_docs = docs[all_idx]
     ordered_labels = labels[all_idx]
     new_train_idx = list(range(0, len(train_idx)))
     new_val_idx = list(range(len(train_idx), len(train_idx)+len(val_idx)))
-    new_test_idx = list(range(len(train_idx)+len(val_idx), len(all_idx)))
-    print("[load_data] Succesfully loaded %i, %i, %i data (%i total)" % (len(new_train_idx), len(new_val_idx), len(new_test_idx), len(all_idx)))
+    new_test_idx = list(range(len(train_idx)+len(val_idx), len(train_idx)+len(val_idx)+len(test_idx)))
+    new_train_unlab_idx = list(range(len(train_idx)+len(val_idx)+len(test_idx), len(all_idx)))
+    print("[load_data] Succesfully loaded %i, %i, %i, %i data (%i total)" % (len(new_train_idx), len(new_val_idx), len(new_test_idx), len(new_train_unlab_idx), len(all_idx)))
 
-    return ordered_docs, ordered_labels, (new_train_idx, new_val_idx, new_test_idx)
+    return ordered_docs, ordered_labels, (new_train_idx, new_val_idx, new_test_idx, new_train_unlab_idx)

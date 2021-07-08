@@ -15,9 +15,10 @@ import pandas as pd
 """
 Trains and Tests according to the config specified in config.py
 """
-labeled_amounts = [400]
-unlabeled_amounts = [i * 4 for i in [10, 25, 50, 75, 100, 150, 250, 400, 600, 800, 1000, 1500]]
-seeds = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+labeled_amounts = [80, 400, 1600]
+unlabeled_amounts = [i * 4 for i in [125, 150, 175, 250, 400, 600, 800, 1000, 1500]]
+
+seeds = range(20)
 repeats_per_seed = 1
 
 def evaluate_current_config(docs, labels, tvt_idx, verbose=True):
@@ -58,73 +59,87 @@ def evaluate_current_config(docs, labels, tvt_idx, verbose=True):
 
     return best_model_test
 
-transductive_settings = {
-    "ductive" : "trans",
-    "graph_method" : {
-        "name" : "pmi_tfidf",
-        "kwargs" : {
-            "window_size" : 10
-        }
-    },
-    "lr" : 0.01,
-    "terminate_patience" : 8,
-}
-
-inductive_settings = {
-    "ductive" : "in",
-    "graph_method" : {
-        "name" : "co_occurence",
-        "kwargs" : {
-            "window_size" : 4
-        }
-    },
-    "lr" : 0.001,
-    "terminate_patience" : 8,
-}
-
 models = [
     {
-        "test_name" : "2 layer GCN",
-        "embedding_layer" : 300,
-        "features_as_onehot" : False, 
-        "model" : {
-            "name" : "gcn",
-            "kwargs" : {
-                "layer_dims" : [80],
-                "dropout" : 0.5,
-                "use_edge_weights" : True,
-                "custom_impl" : False
-            }
-        },
+        "test_name" : "onehot",
+        "initial_repr" : "onehot",
+        "repr_type" : "sparse_tensor",
+        'unique_bag_entries' : True,
+        'min_count_for_bag' : 1,
+        'binary_bag' : True,
     },
     {
-        "test_name" : "2 layer GCN without Edge Weights",
-        "embedding_layer" : 300,
-        "features_as_onehot" : False, 
-        "model" : {
-            "name" : "gcn",
-            "kwargs" : {
-                "layer_dims" : [80],
-                "dropout" : 0.5,
-                "use_edge_weights" : False,
-                "custom_impl" : False
-            }
-        },
+        "test_name" : "onehot, no doc entries",
+        "initial_repr" : "onehot",
+        "repr_type" : "sparse_tensor",
+        'unique_bag_entries' : False,
+        'min_count_for_bag' : 1,
+        'binary_bag' : True,
     },
-    # {
-    #     "test_name" : "3 layer GCN",
-    #     "embedding_layer" : 300,
-    #     "features_as_onehot" : False, 
-    #     "model" : {
-    #         "name" : "gcn",
-    #         "kwargs" : {
-    #             "layer_dims" : [20, 20],
-    #             "dropout" : 0.5,
-    #             "use_edge_weights" : True,
-    #             "custom_impl" : False
-    #         }
-    #     },
-    # },
+    {
+        "test_name" : "bag of words, binary",
+        "initial_repr" : "bag_of_words",
+        "repr_type" : "sparse_tensor",
+        'unique_bag_entries' : True,
+        'min_count_for_bag' : 1,
+        'binary_bag' : True,
+    },
+    {
+        "test_name" : "bag of words, binary, no doc entries",
+        "initial_repr" : "bag_of_words",
+        "repr_type" : "sparse_tensor",
+        'unique_bag_entries' : False,
+        'min_count_for_bag' : 1,
+        'binary_bag' : True,
+    },
+    {
+        "test_name" : "bag of words",
+        "initial_repr" : "bag_of_words",
+        "repr_type" : "sparse_tensor",
+        'unique_bag_entries' : True,
+        'min_count_for_bag' : 1,
+        'binary_bag' : False,
+    },
+    {
+        "test_name" : "bag of words, binary, no doc entries",
+        "initial_repr" : "bag_of_words",
+        "repr_type" : "sparse_tensor",
+        'unique_bag_entries' : False,
+        'min_count_for_bag' : 1,
+        'binary_bag' : True,
+    },
+    {
+        "test_name" : "BAG OF DOCUMENTS",
+        "initial_repr" : "bag_of_documents",
+        "repr_type" : "sparse_tensor",
+        'unique_bag_entries' : True,
+        'min_count_for_bag' : 1,
+        'binary_bag' : False,
+    },
+    {
+        "test_name" : "BAG OF DOCUMENTS, binary",
+        "initial_repr" : "bag_of_documents",
+        "repr_type" : "sparse_tensor",
+        'unique_bag_entries' : True,
+        'min_count_for_bag' : 1,
+        'binary_bag' : True,
+    },
+    {
+        "test_name" : "BAG OF DOCUMENTS, binary, no word entries",
+        "initial_repr" : "bag_of_documents",
+        "repr_type" : "sparse_tensor",
+        'unique_bag_entries' : False,
+        'min_count_for_bag' : 1,
+        'binary_bag' : True,
+    },
+    {
+        "test_name" : "BAG OF DOCUMENTS, no word entries",
+        "initial_repr" : "bag_of_documents",
+        "repr_type" : "sparse_tensor",
+        'unique_bag_entries' : False,
+        'min_count_for_bag' : 1,
+        'binary_bag' : False,
+    },
 ]
 
 def test_all_models(results, docs, labels, tvt_idx, save_info):
@@ -155,7 +170,6 @@ def save_dic(results):
     pd.DataFrame(results).to_csv("./results/"+config["experiment_name"]+".csv")
 
 def main():
-
     results = {
         "test_name" : [],
         "acc" : [],
@@ -176,11 +190,7 @@ def main():
                 docs, labels, tvt_idx = load_data()
 
                 for i in range(repeats_per_seed):
-                    update_config(transductive_settings)
                     results = test_all_models(results, docs, labels, tvt_idx, info_to_save)
-
-                    # update_config(inductive_settings)
-                    # results = test_all_models(results, docs, labels, tvt_idx, info_to_save)
 
 if __name__ == "__main__":
     main()

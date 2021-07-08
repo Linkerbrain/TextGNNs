@@ -1,0 +1,10 @@
+__label__LAB1 I walk to the park
+__label__LAB1 I walk to the store
+__label__LAB1 I run to the supermarket
+__label__LAB2 I eat pizza
+__label__LAB2 I eat lasagne
+__label__LAB2 I eat ice
+__label__LAB2 I eat peanuts
+__label__LAB1 I move to the city
+__label__LAB1 I tremble to the bar
+__label__LAB1 I run to your mother

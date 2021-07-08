@@ -69,6 +69,8 @@ class Trainer():
             # Train
             preds = self.model(self.graph)
 
+            # print("Received predictions:", preds, preds.shape)
+
             train_nodes_preds = preds[self.train_idx]
             train_nodes_true = self.graph.y[self.train_idx]
 
@@ -133,39 +135,43 @@ class Trainer():
 
             # train on test
             if config["unsupervised_loss"] and config['sup_mode'] != 'sup':
+                pass
 
-                train_test_seperation = len(self.test_sampler) / 2
+                # LIMIT = 50 # len(self.test_sampler)
+                # train_test_seperation = LIMIT / 2
 
-                print("[model] Training on TEST...")
-                for i, (batch_size, n_id, adjs) in enumerate(self.test_sampler):
-                    # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
-                    adjs = [adj.to(self.device) for adj in adjs]
+                # print("[model] Training on TEST...")
+                # for i, (batch_size, n_id, adjs) in enumerate(self.test_sampler):
+                #     # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
+                #     adjs = [adj.to(self.device) for adj in adjs]
 
-                    self.optimizer.zero_grad()
+                #     self.optimizer.zero_grad()
                     
-                    # for the unsupervised loss we assume the batch is concetatenated with the pos, then the neg nodes
+                #     # for the unsupervised loss we assume the batch is concetatenated with the pos, then the neg nodes
                     
-                    out, penultimate = self.model.sampled_forward(self.graph.x[n_id], adjs)
+                #     out, penultimate = self.model.sampled_forward(self.graph.x[n_id], adjs)
 
-                    out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
-                    pen, pos_pen, neg_pen = penultimate.split(penultimate.size(0) // 3, dim=0)
+                #     out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
+                #     pen, pos_pen, neg_pen = penultimate.split(penultimate.size(0) // 3, dim=0)
 
-                    # sup_loss = self.loss(out, self.graph.y[n_id[:batch_size // 3]]) * config["unsup_sup_boost"]
+                #     # sup_loss = self.loss(out, self.graph.y[n_id[:batch_size // 3]]) * config["unsup_sup_boost"]
 
-                    pos_loss = -F.logsigmoid((pen * pos_pen).sum(-1)).mean()
-                    neg_loss = -F.logsigmoid(-(pen * neg_pen).sum(-1)).mean()
+                #     pos_loss = -F.logsigmoid((pen * pos_pen).sum(-1)).mean()
+                #     neg_loss = -F.logsigmoid(-(pen * neg_pen).sum(-1)).mean()
 
-                    if i < train_test_seperation:
-                        unsup_test_pos_test += pos_loss
-                        unsup_test_neg_test += neg_loss
-                    else:
-                        unsup_test_pos += pos_loss
-                        unsup_test_neg += neg_loss
+                #     if i < train_test_seperation:
+                #         unsup_test_pos_test += pos_loss
+                #         unsup_test_neg_test += neg_loss
+                #     elif i > LIMIT:
+                #         break
+                #     else:
+                #         unsup_test_pos += pos_loss
+                #         unsup_test_neg += neg_loss
 
-                        loss = pos_loss + neg_loss
+                #         loss = pos_loss + neg_loss
 
-                        loss.backward()
-                        self.optimizer.step()
+                #         loss.backward()
+                #         self.optimizer.step()
 
             print("!!! UNSUP pos loss: %.4f, UNSUP neg loss: %.4f" % (unsup_test_pos_test, unsup_test_neg_test))
 
@@ -253,7 +259,7 @@ class Trainer():
         # elif config["sup_mode"] == 'semi':
         #     config["sup_mode"] = 'sup'
 
-        if config["unsupervised_loss"]:
+        if config["sampled_training"] and config["unsupervised_loss"]:
             return train_loss, val_loss, unsup_train_loss_pos, unsup_train_loss_neg, unsup_val_loss_pos, unsup_val_loss_neg, unsup_test_pos, unsup_test_neg
         
         return train_loss, val_loss
@@ -293,7 +299,7 @@ class Trainer():
         with open('features_SEMI_LASTHOPE_epoch_%i.pickle' % self.epoch, 'wb') as handle:
             pickle.dump(tosave, handle)
 
-    def test(self):
+    def test(self, limit=None):
         # This could be done in the train step as well since it does not require much extra calculation
 
         self.model.eval()
@@ -301,8 +307,10 @@ class Trainer():
         if self.training_style == "transductive":
             preds = self.model(self.graph)
 
-            test_nodes_preds = preds[self.test_idx].max(dim=1).indices
-            test_nodes_true = self.graph.y[self.test_idx]
+            idx = self.test_idx[:limit] if limit else self.test_idx
+
+            test_nodes_preds = preds[idx].max(dim=1).indices
+            test_nodes_true = self.graph.y[idx]
 
             correct = test_nodes_preds.eq(test_nodes_true).sum().item()
 
@@ -351,24 +359,25 @@ class Trainer():
                 else:
                     out = self.model.sampled_forward(self.graph.x[n_id], adjs)
 
-                out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
-                # if config["unsupervised_loss"]:
-                #     # for the unsupervised loss we assume the batch is concetatenated with the pos, then the neg nodes
-                #     out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
+                # out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
+                if config["unsupervised_loss"]:
+                    # for the unsupervised loss we assume the batch is concetatenated with the pos, then the neg nodes
+                    out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
 
-                #     sup_loss = self.loss(out, self.graph.y[n_id[:batch_size // 3]])
+                    sup_loss = self.loss(out, self.graph.y[n_id[:batch_size // 3]])
 
-                #     pos_loss = F.logsigmoid((out * pos_out).sum(-1)).mean()
-                #     neg_loss = F.logsigmoid(-(out * neg_out).sum(-1)).mean()
+                    pos_loss = F.logsigmoid((out * pos_out).sum(-1)).mean()
+                    neg_loss = F.logsigmoid(-(out * neg_out).sum(-1)).mean()
 
-                #     test_loss += sup_loss
-                #     unsup_test_loss_pos += pos_loss
-                #     unsup_test_loss_neg += neg_loss
+                    test_loss += sup_loss
+                    unsup_test_loss_pos += pos_loss
+                    unsup_test_loss_neg += neg_loss
                     
-                #     total_correct += int(out.argmax(dim=-1).eq(self.graph.y[n_id[:batch_size // 3]]).sum())
-                # else:
-                total_correct += int(out.argmax(dim=-1).eq(self.graph.y[n_id[:batch_size // 3]]).sum())
-                total += batch_size // 3
+                    total_correct += int(out.argmax(dim=-1).eq(self.graph.y[n_id[:batch_size // 3]]).sum())
+                    total += batch_size // 3
+                else:
+                    total_correct += int(out.argmax(dim=-1).eq(self.graph.y[n_id[:batch_size]]).sum())
+                    total += batch_size
 
             if config["unsupervised_loss"]:
                 return total_correct / total, test_loss, unsup_test_loss_pos, unsup_test_loss_neg
